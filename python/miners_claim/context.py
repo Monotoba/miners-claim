@@ -34,6 +34,10 @@ def legend(game) -> str:
         return '1-8 BUY  OWNED=HAVE  L=LEAVE  F5=SAVE'
     if game.state == 'assay':
         return 'ENTER=SELL  A=ALL  C=CLEAR  L=LEAVE'
+    if game.state == 'bank':
+        return 'TYPE AMOUNT  D=DEPOSIT  W=WITHDRAW  L=LEAVE'
+    if game.state == 'saloon':
+        return 'D=DRINK $5  P=HIGH CARD $10  L=LEAVE'
     if game.state != 'mine':
         return 'ENTER=CONTINUE  F9=LOAD'
     m = game.miner
@@ -41,6 +45,8 @@ def legend(game) -> str:
         remaining = max(0, game.hazard_limit - game.hazard_exposure)
         return f'{game.hazard_kind.upper()} LEAK! MOVE AWAY ({remaining} TICKS)'
     if m.y <= 2:
+        if getattr(game, 'town_layout', 'legacy') == 'frontier':
+            return 'WEST: M STORE B BANK S ASSAY N SALOON | EAST: MINE'
         return 'M=MERCANTILE S=ASSAY  |  F5=SAVE F9=LOAD'
     near = set()
     for ny in range(max(0, m.y-1), min(len(game.world), m.y+2)):
