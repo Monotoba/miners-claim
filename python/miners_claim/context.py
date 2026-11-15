@@ -40,6 +40,8 @@ def legend(game) -> str:
     if game.hazard_kind:
         remaining = max(0, game.hazard_limit - game.hazard_exposure)
         return f'{game.hazard_kind.upper()} LEAK! MOVE AWAY ({remaining} TICKS)'
+    if m.y <= 2:
+        return 'M=MERCANTILE S=ASSAY  |  F5=SAVE F9=LOAD'
     near = set()
     for ny in range(max(0, m.y-1), min(len(game.world), m.y+2)):
         row = game.world[ny]
@@ -51,6 +53,4 @@ def legend(game) -> str:
     for t in (GAS, WATER, SNAKE, SAND, GEM, GOLD, SILVER, LADDER):
         if t in near:
             return f'NEAR: {ITEM_LABELS[t]}  |  J=JUMP L=LADDER'
-    if m.y <= 2:
-        return 'M=MERCANTILE S=ASSAY  |  F5=SAVE F9=LOAD'
     return 'ORE: GOLD $20 SILVER $12 GEM $45  |  P=PICKUP'
