@@ -16,9 +16,9 @@ The default is **automatic integer zoom** chosen to fit the current desktop. The
 
 ## Controls
 
-- At Mercantile: **1–8** purchase equipment, **L** leave.
-- Mine: **arrow keys** move or dig, **J** jump, **L** place ladder, **M** enter Mercantile near town, **S** enter Assay Office, **T** drop TNT, **P** collect blasted ore.
-- Assay: numeric value and **Enter** to sell, **A** to sell everything, **C** clear, **L** leave.
+- At Mercantile: **1–8** purchase equipment; the screen displays cash, item prices, inventory, and which durable tools are already owned. **L** leaves.
+- Mine: **arrow keys** move or dig, **J** jump, **L** place ladder, **M** enter the **Mercantile** (near x=0–12, y≤6), **S** enter the **Assay Office** (near x=10–25, y≤6), **T** drop TNT, **P** collect blasted ore. Surface storefronts and context prompts indicate the shops. The interaction zones intentionally overlap at x=10–12 as they did in the original game.
+- Assay: enter a numeric value and press **Enter** to sell, **A** to sell everything, **C** clear, **L** or **Esc** leave. The screen shows cash and unsold haul.
 - **F5** save, **F9** load. **Esc** quits the current run or returns from assay.
 
 Saves use a validated JSON format in `~/.local/share/miners-claim/miners_claim_python.json` (Windows uses the same path relative to the user's home). QB64 save V1/V2 import is supported; export back to QB64 is not yet provided.
@@ -26,7 +26,7 @@ Saves use a validated JSON format in `~/.local/share/miners-claim/miners_claim_p
 ## Differences and incomplete items
 
 - Terrain uses a seedable Python RNG and will not match QB64 byte-for-byte.
-- Graphics now have refined procedural pixel-art textures and a more detailed miner, without external image assets. This is not yet final artwork; no sound effects yet.
+- Graphics now include surface Mercantile and Assay Office buildings, redesigned trading interiors, procedural pixel-art textures, and a more detailed miner, without external image assets. Town buildings are visual overlays on the original world (no terrain/save-file changes). Artwork is still provisional; no sound effects yet.
 - High scores are currently held only for the running session (no persistent score file).
 - The original screen art and some menu messages are not reproduced verbatim.
 - Rules are isolated and covered by headless tests. Window sizing and letterboxing have additional unit tests. Player testing has confirmed the initial game runs; the updated rendering still needs testing across desktop configurations.
