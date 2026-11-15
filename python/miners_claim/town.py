@@ -21,22 +21,23 @@ WOOD = (104, 68, 46)
 WOOD_LIGHT = (151, 103, 61)
 
 
-def visible_facades(camera_x: int, camera_y: int) -> tuple[tuple[str, pygame.Rect], ...]:
-    """Return visible world-aligned shop fronts, clipped to the mine viewport."""
+from .townplan import buildings, shaft
+
+
+def visible_facades(camera_x: int, camera_y: int,
+                    layout: str = 'frontier') -> tuple[tuple[str, pygame.Rect], ...]:
+    """Visible shop fronts in world coordinates, clipped to the mine view."""
     if camera_y > 1:
         return ()
-    clip = pygame.Rect(0, HUD, CANVAS_WIDTH, 160)
-    facades = []
-    for name, left, right in (
-        ('mercantile', SHOP_LEFT, SHOP_RIGHT),
-        ('assay', ASSAY_LEFT, ASSAY_RIGHT),
-    ):
-        rect = pygame.Rect((left-camera_x)*TILE, HUD-camera_y*TILE,
-                           (right-left+1)*TILE, 2*TILE)
+    clip = pygame.Rect(0, HUD, CANVAS_WIDTH, 144)
+    result = []
+    for building in buildings(layout):
+        rect = pygame.Rect((building.west-camera_x)*TILE, HUD-camera_y*TILE,
+                           (building.east-building.west+1)*TILE, 2*TILE)
         cropped = rect.clip(clip)
         if cropped.width and cropped.height:
-            facades.append((name, cropped))
-    return tuple(facades)
+            result.append((building.name, cropped))
+    return tuple(result)
 
 
 def _write(surface, font, text: str, x: int, y: int, color=PAPER):
@@ -49,41 +50,77 @@ def _center(surface, font, text: str, cx: int, y: int, color=PAPER):
 
 
 def draw_town(surface: pygame.Surface, camera_x: int, camera_y: int,
-              font: pygame.font.Font):
-    """Draw town buildings *over* the world tiles and *under* the miner."""
+              font, layout: str = 'frontier', frame_number: int = 0):
+    """World-aligned western buildings, east mine signs and walking locals."""
     if camera_y > 1:
         return
-    surface.set_clip(pygame.Rect(0, HUD, CANVAS_WIDTH, 160))
+    surface.set_clip(pygame.Rect(0, HUD, CANVAS_WIDTH, 144))
     try:
-        for label, left, right, siding, roof in (
-            ('MERCANTILE', SHOP_LEFT, SHOP_RIGHT, (118, 80, 52), (80, 48, 38)),
-            ('ASSAY OFFICE', ASSAY_LEFT, ASSAY_RIGHT, (112, 112, 109), (68, 76, 88)),
-        ):
-            x = (left-camera_x)*TILE
+        palette = {
+            'mercantile': ('MERCANTILE', (118,80,52), (80,48,38)),
+            'bank': ('BANK', (120,111,93), (64,72,78)),
+            'assay': ('ASSAY OFFICE', (112,112,109), (68,76,88)),
+            'saloon': ('SALOON', (141,83,65), (91,50,46)),
+        }
+        for b in buildings(layout):
+            label, siding, roof = palette[b.name]
+            x = (b.west-camera_x)*TILE
             y = HUD-camera_y*TILE
-            w = (right-left+1)*TILE
-            # Low silhouette fits within the two sky rows available in v29.
-            pygame.draw.rect(surface, (31, 26, 25), (x+2, y+6, w-4, 27))
-            pygame.draw.rect(surface, siding, (x+4, y+8, w-8, 23))
+            w = (b.east-b.west+1)*TILE
+            pygame.draw.rect(surface, (31,26,25), (x+2,y+6,w-4,27))
+            pygame.draw.rect(surface, siding, (x+4,y+8,w-8,23))
             for wx in range(x+5, x+w-5, 9):
-                pygame.draw.line(surface, tuple(max(0, c-13) for c in siding),
-                                 (wx, y+13), (wx, y+28))
-            pygame.draw.polygon(surface, roof, ((x, y+9), (x+8, y+3),
-                                                 (x+w-8, y+3), (x+w, y+9)))
-            pygame.draw.line(surface, (186, 144, 91), (x+8, y+4), (x+w-8, y+4), 1)
+                pygame.draw.line(surface,tuple(max(0,c-13) for c in siding),
+                                 (wx,y+13),(wx,y+28))
+            pygame.draw.polygon(surface,roof,((x,y+9),(x+8,y+3),
+                                              (x+w-8,y+3),(x+w,y+9)))
+            pygame.draw.line(surface,(186,144,91),(x+8,y+4),(x+w-8,y+4))
             cx = x+w//2
-            pygame.draw.rect(surface, (43, 33, 28), (cx-43, y+8, 86, 12))
-            pygame.draw.rect(surface, (205, 162, 92), (cx-43, y+8, 86, 12), 1)
-            _center(surface, font, label, cx, y+10, (244, 214, 145))
-            for window_x in (x+18, x+w-31):
-                pygame.draw.rect(surface, (37, 62, 80), (window_x, y+21, 14, 10))
-                pygame.draw.line(surface, (111, 181, 198), (window_x+2, y+22),
-                                 (window_x+2, y+29))
-            pygame.draw.rect(surface, (57, 37, 28), (cx-8, y+21, 16, 11))
-            pygame.draw.rect(surface, (183, 126, 74), (cx-8, y+21, 16, 11), 1)
-            pygame.draw.circle(surface, GOLD, (cx+4, y+27), 1)
+            pygame.draw.rect(surface,(43,33,28),(cx-43,y+8,86,12))
+            pygame.draw.rect(surface,(205,162,92),(cx-43,y+8,86,12),1)
+            _center(surface,font,label,cx,y+10,(244,214,145))
+            for window_x in (x+18,x+w-31):
+                pygame.draw.rect(surface,(37,62,80),(window_x,y+21,14,10))
+                pygame.draw.line(surface,(111,181,198),(window_x+2,y+22),
+                                 (window_x+2,y+29))
+            pygame.draw.rect(surface,(57,37,28),(cx-8,y+21,16,11))
+            pygame.draw.rect(surface,(183,126,74),(cx-8,y+21,16,11),1)
+            pygame.draw.circle(surface,GOLD,(cx+4,y+27),1)
+        if layout == 'frontier':
+            # Signposts establish west-left and east-right orientation.
+            for column, caption in ((2, 'WEST'), (64, 'EAST')):
+                px = (column-camera_x)*TILE
+                py = HUD+(1-camera_y)*TILE
+                pygame.draw.rect(surface,(90,62,36),(px+6,py-10,3,25))
+                pygame.draw.rect(surface,(166,123,76),(px-10,py-14,35,10))
+                _center(surface,font,caption,px+7,py-13,(32,26,22))
+            sx=(shaft(layout)-camera_x)*TILE
+            sy=HUD+(1-camera_y)*TILE
+            _center(surface,font,'MINE',sx+8,sy-15,GOLD)
+            draw_townspeople(surface, camera_x, camera_y, frame_number)
     finally:
         surface.set_clip(None)
+
+
+def draw_townspeople(surface, camera_x: int, camera_y: int,
+                    frame_number: int = 0):
+    """Four simple, nonblocking pedestrians with different walking cycles."""
+    palette = ((182,83,72),(82,152,188),(177,157,78),(133,109,168))
+    for i, clothing in enumerate(palette):
+        # Wrap at the town's eastern edge, always on the open surface.
+        cycle = (frame_number // (7+i*2) + i*17) % 60
+        world_x = 4 + (cycle if i % 2 == 0 else 59-cycle)
+        px=(world_x-camera_x)*TILE+1
+        py=HUD+(1-camera_y)*TILE
+        if not (-18<px<CANVAS_WIDTH+10):
+            continue
+        stride=(frame_number//(5+i))%2
+        pygame.draw.rect(surface,(44,41,47),(px+4,py+12,3,3+stride))
+        pygame.draw.rect(surface,(44,41,47),(px+9,py+12,3,4-stride))
+        pygame.draw.rect(surface,clothing,(px+4,py+6,9,7))
+        pygame.draw.rect(surface,(220,165,121),(px+5,py+2,7,5))
+        pygame.draw.rect(surface,(76,50,40),(px+4,py+1,9,2))
+        pygame.draw.rect(surface,(53,43,39),(px+6,py+4,1,1))
 
 
 def draw_store(surface: pygame.Surface, font: pygame.font.Font,
@@ -132,3 +169,37 @@ def draw_assay(surface: pygame.Surface, font: pygame.font.Font,
     _write(surface, font, f'${sale_input}_', 135, 126, GOLD)
     _write(surface, font, 'ENTER SELL    A SELL ALL    C CLEAR', 29, 150)
     _write(surface, font, 'L / ESC  RETURN TO CLAIM', 65, 166, GOLD)
+
+def draw_bank(surface: pygame.Surface, font, large, miner,
+              balance: int, amount: str):
+    """Bank ledger: all transfers are performed by engine.Game."""
+    surface.fill((19,23,31))
+    pygame.draw.rect(surface,(61,72,79),(9,8,302,160))
+    pygame.draw.rect(surface,(178,157,103),(9,8,302,160),2)
+    pygame.draw.rect(surface,(32,40,49),(18,16,284,30))
+    _center(surface,large,'FRONTIER BANK',160,21,GOLD)
+    _center(surface,font,'SAFE DEPOSITS AND WITHDRAWALS',160,38,PAPER)
+    _write(surface,font,f'POCKET CASH       ${miner.money}',29,59)
+    _write(surface,font,f'BANK BALANCE      ${balance}',29,75,GOLD)
+    pygame.draw.line(surface,(178,157,103),(26,94),(294,94))
+    _write(surface,font,'TRANSFER AMOUNT',26,105)
+    pygame.draw.rect(surface,(17,21,27),(150,101,139,19))
+    pygame.draw.rect(surface,(204,173,104),(150,101,139,19),1)
+    _write(surface,font,f'${amount}_',157,107,GOLD)
+    _write(surface,font,'D DEPOSIT   W WITHDRAW',40,134,PAPER)
+    _write(surface,font,'C CLEAR     L LEAVE',59,151,GOLD)
+
+
+def draw_saloon(surface: pygame.Surface, font, large, miner):
+    """Saloon menu with one-water drinks and an even-odds high-card game."""
+    surface.fill((24,17,20))
+    pygame.draw.rect(surface,(92,51,44),(10,8,300,160))
+    pygame.draw.rect(surface,(209,151,83),(10,8,300,160),2)
+    pygame.draw.rect(surface,(56,30,30),(18,16,284,34))
+    _center(surface,large,'FRONTIER SALOON',160,22,GOLD)
+    _center(surface,font,'DRINKS, CARDS AND CONVERSATION',160,42,PAPER)
+    _write(surface,font,f'YOUR CASH: ${miner.money}',36,63,GOLD)
+    _write(surface,font,'D  BUY DRINK   ${5}  (WATER +1)',27,84)
+    _write(surface,font,'P  PLAY HIGH CARD   ${10} BET',27,104)
+    _write(surface,font,'HIGHER CARD WINS ${10}; TIE: NO CHANGE',26,124)
+    _write(surface,font,'L  RETURN TO TOWN',67,151,GOLD)
