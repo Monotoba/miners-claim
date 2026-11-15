@@ -1,7 +1,7 @@
 # Miner's Claim — QB64 v0.3.0 port
 
-**Status:** source implementation, awaiting compilation and interactive gameplay
-verification in QB64-PE. This is a separate **QB64 edition version**; the
+**Status:** QB64-PE Linux CI compilation verified; interactive gameplay
+verification is still required. This is a separate **QB64 edition version**; the
 Python edition retains its own v1.0.0 tag. The historical QB64 v29 sources in
 `original-qb64/` are unmodified.
 
@@ -9,8 +9,7 @@ Python edition retains its own v1.0.0 tag. The historical QB64 v29 sources in
 
 Open `MinersClaim_QB64_v0.3.0.bas` in QB64-PE, compile, and run. It uses QB64
 image, keyboard, and audio extensions; it is **not** intended for QuickBASIC
-4.5 or the Color Computer. The 320×200 game scales 6× by default; edit
-`SCREEN_SCALE` for a smaller window if needed. No external artwork is required.
+4.5 or the Color Computer. The 320×200 game scales **5× by default (1600×1000 window)** so the bottom message line is not clipped by Linux window decorations on 1200-pixel-high desktops. The previous 6× size produced a 1920×1200 window before accounting for the title bar and panels. Edit `SCREEN_SCALE` near the beginning of the `.bas` file if a different window size is needed. No external artwork is required.
 
 ### Implemented mechanics
 
@@ -54,7 +53,9 @@ python -m unittest discover -s tests -p 'test_qb64_port_v030.py' -v
 ```
 
 These tests verify structural invariants, code paths, economic transfers,
-and versioned save layout. **They do not compile, execute, or certify QB64.**
+and versioned save layout. A separate GitHub Actions workflow now compiles
+this source with QB64-PE on Linux; the structural tests alone do not validate
+runtime gameplay.
 Before publishing as a final tagged executable release, compile in QB64-PE,
 play a full mining round trip, test all bank/saloon/encounter and cart states,
 verify old save imports, and run the full Python regression suite.
