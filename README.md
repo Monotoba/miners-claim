@@ -2,7 +2,8 @@
 
 [![CI](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml/badge.svg?branch=main&event=push&v=1.0.0)](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml)
 [![License: MC-NSAL 1.0](https://img.shields.io/badge/license-MC--NSAL%201.0-blue)](LICENSE)
-![Project status: QB64 archival baseline](https://img.shields.io/badge/status-Python%20alpha-orange)
+[![Python v1.0.0](https://img.shields.io/badge/Python-v1.0.0-blue)](https://github.com/Monotoba/miners-claim/releases/tag/v1.0.0)
+![QB64 port v0.3.0 candidate](https://img.shields.io/badge/QB64-v0.3.0%20candidate-yellow)
 [![Latest release](https://img.shields.io/github/v/release/Monotoba/miners-claim?display_name=tag&label=release)](https://github.com/Monotoba/miners-claim/releases)
 
 **Miner's Claim** is a retro-style, side-scrolling mining game originally written in QB64.
@@ -11,7 +12,7 @@ Copyright © 2026 Randall L. Morgan.
 
 ## Status
 
-The original QB64 source is archived here without modification. An **initial playable Python/Pygame desktop port** is available in [`python/`](python/README.md), with a testable, pygame-independent rules engine. The CoCo 1, CoCo 2, CoCo 3, and JavaScript versions remain planned and are **not yet implemented**. The Python port is alpha quality and has not yet passed a graphical smoke test on a desktop.
+The original QB64 source remains archived **without modification**. The playable Python/Pygame edition is released as [v1.0.0](https://github.com/Monotoba/miners-claim/releases/tag/v1.0.0) with automated Linux/Windows regression checks and user playtesting. A separate [QB64 v0.3.0 port candidate](qb64/README.md) brings the updated frontier-town mechanics into QB64-PE; compiler verification is tracked separately, so do not treat the QB64 port as a certified executable release until its compile/playtest checks pass. Native CoCo 1, CoCo 2, CoCo 3 and browser ports remain planned.
 
 ## Original code
 
@@ -27,13 +28,23 @@ Install a compatible QB64 implementation and open `original-qb64/MinersClaim_QB6
 
 ## Game design specification
 
-The [QB64 v29 gameplay baseline](specifications/GAME_DESIGN_V1.md) documents implemented mechanics, values, persistence formats, porting requirements, and outstanding ambiguities. Its source-derived static checks can be run with:
+The [QB64 v29 historical baseline](specifications/GAME_DESIGN_V1.md) documents original mechanics, values and persistence formats. The [ranked feature inventory and CoCo porting specification](specifications/FEATURE_PRIORITY_COCO.md) defines the updated Python-era features, mandatory core, optional features, retention ranking and default removal order for memory-constrained 6809 targets. Its source-derived static checks can be run with:
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
-The tests now include headless Python gameplay scenarios and QB64 archive integrity checks. They do not validate QB64 runtime execution, desktop rendering, or CoCo hardware compatibility.\n\n## Python desktop edition (alpha)\n\nSee [installation instructions, controls, and known limitations](python/README.md). The initial port provides mining, trading, TNT, hazards, equipment, scrolling graphics, and versioned JSON saves with original QB64 V1/V2 import.\n\nThis is not yet a standalone executable release; install pygame-ce as described in `python/README.md`.
+The tests now include headless Python gameplay scenarios and QB64 archive integrity checks. They do not validate QB64 runtime execution, desktop rendering, or CoCo hardware compatibility.
+
+## Python desktop edition (alpha)
+
+See [installation instructions, controls, and known limitations](python/README.md). The initial port provides mining, trading, TNT, hazards, equipment, scrolling graphics, and versioned JSON saves with original QB64 V1/V2 import.
+
+This is not yet a standalone executable release; install pygame-ce as described in `python/README.md`.
+
+## QB64 v0.3.0 candidate
+
+The [QB64 edition source and controls](qb64/README.md) are a separately versioned port of the current Python gameplay to QB64-PE, derived from the preserved QB64 v29 source. The current candidate implements the expanded frontier town, bank/saloon, modern hazards, NPCs, wheelbarrow cargo and road encounters, with V3 saves and V1/V2 load fallback. Static tests are in [`tests/test_qb64_port_v030.py`](tests/test_qb64_port_v030.py), and compilation is checked independently in [`qb64-compile.yml`](.github/workflows/qb64-compile.yml). Until compiled and manually tested, this is **source-only candidate**, not a guaranteed playable executable.
 
 ## Continuous integration and releases
 
