@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   tests:
-    name: Static checks (${{ matrix.os }}, Python ${{ matrix.python }})
+    name: Archive and engine tests (${{ matrix.os }}, Python ${{ matrix.python }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     strategy:
@@ -35,8 +35,8 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Check Python test syntax
-        run: python -m compileall -q tests
-      - name: Verify archived sources and specification
+        run: python -m compileall -q tests python/miners_claim
+      - name: Run archive, specification, and engine regression tests
         run: python -m unittest discover -s tests -v
 
   source-release:
