@@ -12,7 +12,7 @@ python -m pip install -r requirements.txt
 python -m miners_claim
 ```
 
-Optional: `python -m miners_claim --scale 2 --seed 12345`, or import an existing original QB64 save with `--load-qb64 /path/to/miners_claim_save.txt`.
+The default is **automatic integer zoom** chosen to fit the current desktop. The game window is **resizable**, with centered letterboxing so the original 320×200 proportions are maintained. Press **F11** to toggle fullscreen. You can specify a fixed starting scale using `--scale 1` through `--scale 8`, or start fullscreen using `--fullscreen`.\n\nOptional: `python -m miners_claim --scale 4 --seed 12345`, or import an original QB64 save with `--load-qb64 /path/to/miners_claim_save.txt`. Display layout is calculated from the SDL-reported desktop dimensions; OS-specific high-DPI scaling can vary, especially on fractional-scaling setups.
 
 ## Controls
 
@@ -26,10 +26,10 @@ Saves use a validated JSON format in `~/.local/share/miners-claim/miners_claim_p
 ## Differences and incomplete items
 
 - Terrain uses a seedable Python RNG and will not match QB64 byte-for-byte.
-- Graphics are simplified placeholder sprites; no sound effects yet.
+- Graphics now have refined procedural pixel-art textures and a more detailed miner, without external image assets. This is not yet final artwork; no sound effects yet.
 - High scores are currently held only for the running session (no persistent score file).
 - The original screen art and some menu messages are not reproduced verbatim.
-- Rules are isolated and covered by headless tests; playable behavior still needs user playtesting.
+- Rules are isolated and covered by headless tests. Window sizing and letterboxing have additional unit tests. Player testing has confirmed the initial game runs; the updated rendering still needs testing across desktop configurations.
 - No Windows/Linux standalone executable packages or automated release builds yet.
 
-To test from repo root: `python -m unittest discover -s tests -v`.
+To test from repo root: `python -m unittest discover -s tests -v`. CI runs the engine, layout, archive-integrity, and headless pygame smoke tests on Linux and Windows.
