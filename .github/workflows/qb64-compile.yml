@@ -1,0 +1,55 @@
+name: QB64 v0.3.0 compile check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - qb64/**
+      - tests/test_qb64_port_v030.py
+      - .github/workflows/qb64-compile.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compile-qb64:
+    name: Compile QB64 frontend (Ubuntu)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Static port invariants
+        run: python -m unittest discover -s tests -p test_qb64_port_v030.py -v
+      - name: Install QB64PE build requirements
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libgl1-mesa-dev libglu1-mesa-dev libasound2-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev
+      - name: Download official pinned QB64-PE Linux source distribution
+        run: |
+          curl --fail --location --retry 3 --show-error \
+            https://github.com/QB64-Phoenix-Edition/QB64pe/releases/download/v4.7.0-GLFW/qb64pe_lnx-x64-4.7.0-GLFW.tar.gz \
+            -o /tmp/qb64pe-linux.tar.gz
+          mkdir -p /tmp/qb64pe-extract
+          tar -xzf /tmp/qb64pe-linux.tar.gz -C /tmp/qb64pe-extract
+      - name: Build QB64-PE and compile Miner's Claim
+        shell: bash
+        run: |
+          set -euo pipefail
+          setup="$(find /tmp/qb64pe-extract -name setup_lnx.sh -type f -print -quit)"
+          test -n "$setup"
+          cd "$(dirname "$setup")"
+          chmod +x ./setup_lnx.sh
+          ./setup_lnx.sh
+          test -x ./qb64pe
+          ./qb64pe -x "$GITHUB_WORKSPACE/qb64/MinersClaim_QB64_v0.3.0.bas" -o "$GITHUB_WORKSPACE/miners-claim-qb64-v0.3.0"
+          test -s "$GITHUB_WORKSPACE/miners-claim-qb64-v0.3.0"
+      - name: Preserve tested Linux executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: miners-claim-qb64-v0.3.0-linux-x64
+          path: miners-claim-qb64-v0.3.0
+          if-no-files-found: error
