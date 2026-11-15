@@ -43,7 +43,12 @@ jobs:
           test -n "$setup"
           cd "$(dirname "$setup")"
           chmod +x ./setup_lnx.sh
-          ./setup_lnx.sh
+          mkdir -p "$HOME/.local/share/applications"
+          # QB64-PE's installer launches the graphical IDE after building.
+          # A headless CI runner cannot open that window, but the CLI compiler
+          # is already built. Accept the final GUI-launch failure only when
+          # the resulting executable exists.
+          ./setup_lnx.sh </dev/null || test -x ./qb64pe
           test -x ./qb64pe
           ./qb64pe -x "$GITHUB_WORKSPACE/qb64/MinersClaim_QB64_v0.3.0.bas" -o "$GITHUB_WORKSPACE/miners-claim-qb64-v0.3.0"
           test -s "$GITHUB_WORKSPACE/miners-claim-qb64-v0.3.0"
