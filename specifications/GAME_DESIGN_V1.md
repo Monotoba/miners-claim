@@ -11,6 +11,11 @@ This document describes **observed code-level behavior** of the archived QB64 v2
 
 The original QB64 source is immutable historical material. Work on separate ports; do not alter archived files.
 
+### Current expanded-game and CoCo porting requirements
+
+This v1.0 document remains the **unchanged historical QB64 v29 behavioral baseline**. The **current Python v1.0.0 release and new CoCo target priorities** are specified in [`FEATURE_PRIORITY_COCO.md`](FEATURE_PRIORITY_COCO.md). That companion specification contains the modern-feature inventory, per-feature play-value rankings, dependency rules, platform profiles, and the explicit feature-removal sequence. When designing a new port, consult **both** documents; do not interpret original QB64 facts in this baseline as requirements to include every feature in every CoCo edition.
+
+
 ## 2. Core gameplay loop
 
 Player purchases equipment at the Mercantile, moves along the surface to the CLAIM shaft, digs or mines underground tiles, gathers value into a limited haul, returns to the Assay Office to exchange haul for cash, and repeats. Hazards consume lives. The win condition is **cash (not cash plus unsold haul) >= $1,000,000**. Runs end through quitting, life exhaustion, or a bankruptcy check; results may be recorded in the top-ten high scores.
