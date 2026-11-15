@@ -48,7 +48,9 @@ jobs:
           # A headless CI runner cannot open that window, but the CLI compiler
           # is already built. Accept the final GUI-launch failure only when
           # the resulting executable exists.
-          ./setup_lnx.sh </dev/null || test -x ./qb64pe
+          # Installation builds the CLI, then attempts to launch the GUI.
+          # Bound that optional GUI launch: the source compiler must exist.
+          timeout --signal=TERM --kill-after=5s 90s ./setup_lnx.sh </dev/null || true
           test -x ./qb64pe
           ./qb64pe -x "$GITHUB_WORKSPACE/qb64/MinersClaim_QB64_v0.3.0.bas" -o "$GITHUB_WORKSPACE/miners-claim-qb64-v0.3.0"
           test -s "$GITHUB_WORKSPACE/miners-claim-qb64-v0.3.0"
