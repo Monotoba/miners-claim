@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml)
 [![License: MC-NSAL 1.0](https://img.shields.io/badge/license-MC--NSAL%201.0-blue)](LICENSE)
-![Project status: QB64 archival baseline](https://img.shields.io/badge/status-QB64%20archive-informational)
+![Project status: QB64 archival baseline](https://img.shields.io/badge/status-Python%20alpha-orange)
 [![Latest release](https://img.shields.io/github/v/release/Monotoba/miners-claim?display_name=tag&label=release)](https://github.com/Monotoba/miners-claim/releases)
 
 **Miner's Claim** is a retro-style, side-scrolling mining game originally written in QB64.
@@ -11,7 +11,7 @@ Copyright © 2026 Randall L. Morgan.
 
 ## Status
 
-The original QB64 source is archived here without modification. The native CoCo 1, CoCo 2, CoCo 3, Python and JavaScript versions are planned; **they are not implemented** in this repository.
+The original QB64 source is archived here without modification. An **initial playable Python/Pygame desktop port** is available in [`python/`](python/README.md), with a testable, pygame-independent rules engine. The CoCo 1, CoCo 2, CoCo 3, and JavaScript versions remain planned and are **not yet implemented**. The Python port is alpha quality and has not yet passed a graphical smoke test on a desktop.
 
 ## Original code
 
@@ -33,11 +33,11 @@ The [QB64 v29 gameplay baseline](specifications/GAME_DESIGN_V1.md) documents imp
 python3 -m unittest discover -s tests -v
 ```
 
-Static tests do not validate QB64 runtime execution or CoCo hardware compatibility.
+The tests now include headless Python gameplay scenarios and QB64 archive integrity checks. They do not validate QB64 runtime execution, desktop rendering, or CoCo hardware compatibility.\n\n## Python desktop edition (alpha)\n\nSee [installation instructions, controls, and known limitations](python/README.md). The initial port provides mining, trading, TNT, hazards, equipment, scrolling graphics, and versioned JSON saves with original QB64 V1/V2 import.\n\nThis is not yet a standalone executable release; install pygame-ce as described in `python/README.md`.
 
 ## Continuous integration and releases
 
-The [GitHub Actions CI workflow](.github/workflows/ci.yml) checks archived QB64 source integrity and source-derived specification assertions on Linux and Windows using Python 3.10 and 3.13. It runs on pushes to `main`, pull requests, and manual dispatch.
+The [GitHub Actions CI workflow](.github/workflows/ci.yml) checks archived QB64 source integrity, source-derived specification assertions, and Python gameplay regression tests on Linux and Windows using Python 3.10 and 3.13. It runs on pushes to `main`, pull requests, and manual dispatch.
 
 When a tag matching `v*` is pushed, **after all CI test jobs pass**, the workflow creates a GitHub Release containing source-only ZIP and tar.gz archives plus a `SHA256SUMS` manifest. It does not yet compile QB64 or package playable Python, JavaScript, or CoCo binaries; those release jobs will be added as the respective implementations mature.
 
@@ -46,7 +46,7 @@ No external secrets are required; the release job receives narrowly scoped `cont
 ## Roadmap
 
 1. Establish versioned gameplay specifications and test scenarios.
-2. Port to Python for Linux and Windows, preserving gameplay.
+2. Expand and stabilize the **initial Python desktop port**, adding GUI smoke tests, persistent high scores, sound, and standalone builds.
 3. Port to JavaScript for browsers.
 4. Implement 6809-based CoCo 1/2 and CoCo 3 editions, with documented platform differences.
 
