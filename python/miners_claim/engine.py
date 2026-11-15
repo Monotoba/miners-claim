@@ -52,6 +52,9 @@ class Game:
         self.tnt_active = False
         self.tnt_x = self.tnt_y = self.tnt_frames = 0
         self.jump_grace = 0
+        self.hazard_kind = None
+        self.hazard_exposure = 0
+        self.hazard_limit = 0
         self.final_score = 0
         self.final_depth = 0
         self._generate()
@@ -168,6 +171,8 @@ class Game:
     def lose_life(self, why: str):
         m=self.miner
         m.lives -= 1; m.haul=0
+        self.hazard_kind = None
+        self.hazard_exposure = self.hazard_limit = 0
         if m.lives <= 0: self._end_run(why+' No lives remain.')
         else:
             m.x=8; m.y=1
@@ -215,7 +220,10 @@ class Game:
             if t in VALUE and m.haul + VALUE[t] > self.capacity:
                 self.message='Haul full. Return to ASSAY.'; return False
         elif t in (WATER,GAS,SNAKE):
-            self.world[y][x]=AIR
+            # Water and gas pockets remain dangerous after contact. Snakes
+            # are removed after an encounter as in the original prototype.
+            if t == SNAKE:
+                self.world[y][x] = AIR
             self.lose_life({WATER:'You drowned.',GAS:'Gas pocket exploded.',SNAKE:'A rattlesnake den.'}[t]); return False
         elif t == BEDROCK:
             self.message='Bedrock. Cannot dig.'; return False
@@ -229,7 +237,7 @@ class Game:
         m=self.miner
         if m.y in (SURFACE-1,SURFACE) or m.y>=HEIGHT-1: return True
         if self.world[m.y][m.x]==LADDER: return True
-        return self.world[m.y+1][m.x] != AIR
+        return self.world[m.y+1][m.x] not in (AIR, WATER, GAS)
 
     def jump(self):
         m=self.miner
@@ -250,9 +258,51 @@ class Game:
         m=self.miner
         if self.supported() or m.y+1>=HEIGHT: return
         if m.y+1 > SURFACE+2 and not m.lantern: return
-        if self.world[m.y+1][m.x] in (AIR,LADDER):
+        below = self.world[m.y+1][m.x]
+        if below in (WATER, GAS):
+            self.lose_life('Fell into water.' if below == WATER else 'Fell into a gas pocket.')
+            return
+        if below in (AIR,LADDER):
             m.y+=1; m.steps+=1; m.deepest=max(m.deepest,m.y)
             self.message='You fall!'
+
+    def check_hazards(self):
+        """Expose a miner in an open tunnel to adjacent water or toxic gas.
+
+        Pockets have an active danger zone rather than acting as harmless
+        support blocks. Exposure has a short warning window for escape.
+        The counter is transient, not written into legacy-compatible saves.
+        """
+        m = self.miner
+        if self.state != 'mine' or m.y <= SURFACE:
+            self.hazard_kind = None
+            self.hazard_exposure = self.hazard_limit = 0
+            return
+        tile = self.world[m.y][m.x]
+        if tile in (WATER, GAS):
+            self.lose_life('Drowned in water.' if tile == WATER else 'Overcome by gas.')
+            return
+        neighbors = [
+            self.world[ny][nx]
+            for nx, ny in ((m.x-1,m.y), (m.x+1,m.y), (m.x,m.y-1), (m.x,m.y+1))
+            if self.bounds(nx,ny)
+        ]
+        kind = 'gas' if GAS in neighbors else 'water' if WATER in neighbors else None
+        if kind is None:
+            self.hazard_kind = None
+            self.hazard_exposure = self.hazard_limit = 0
+            return
+        if kind != self.hazard_kind:
+            self.hazard_kind = kind
+            self.hazard_exposure = 0
+            self.hazard_limit = 20 if kind == 'gas' else 35
+        self.hazard_exposure += 1
+        if self.hazard_exposure >= self.hazard_limit:
+            self.lose_life('Overcome by leaking gas.' if kind == 'gas'
+                           else 'Flooded by a water pocket.')
+        elif self.hazard_exposure == 1:
+            self.message = ('GAS LEAK! Move away!' if kind == 'gas'
+                            else 'WATER SEEPAGE! Move away!')
 
     def drop_tnt(self):
         m=self.miner
@@ -267,7 +317,10 @@ class Game:
             self.tnt_frames-=1
             if self.tnt_frames<=0: self.explode()
         if self.state == 'mine':
-            self.gravity(); self._check_gameover(); self._check_win()
+            self.gravity()
+            self.check_hazards()
+            self._check_gameover()
+            self._check_win()
 
     def explode(self):
         if not self.tnt_active: return
@@ -330,6 +383,7 @@ class Game:
         if obj.state not in ('mine','store','assay'): raise ValueError('Invalid state')
         obj.jump_grace=int(data['jump_grace'])
         obj.message='Saved game loaded.';obj.final_score=obj.final_depth=0
+        obj.hazard_kind=None;obj.hazard_exposure=obj.hazard_limit=0
         return obj
 
     def save(self,path:Path):
@@ -376,4 +430,5 @@ class Game:
         obj.loot=[flat[i:i+WIDTH] for i in range(0,len(flat),WIDTH)]
         obj.state='mine';obj.jump_grace=0
         obj.message='Imported QB64 save.';obj.final_score=obj.final_depth=0
+        obj.hazard_kind=None;obj.hazard_exposure=obj.hazard_limit=0
         return cls.from_dict(obj.to_dict())
