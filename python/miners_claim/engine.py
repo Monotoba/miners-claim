@@ -312,10 +312,11 @@ class Game:
             self.encounter_cooldown -= 1
             return False
 
-        # Risk per eligible surface step: 0.3% at the western edge,
-        # climbing quadratically to 2.3% by the eastern mine shaft.
+        # Rare encounter: 0.005% per eligible step at the far west,
+        # increasing quadratically to 0.05% at the eastern mine.
+        # Chance is checked only while carrying ore or >$300 cash.
         fraction = m.x / SHAFT
-        bandit_chance = 0.003 + 0.020 * fraction * fraction
+        bandit_chance = 0.00005 + 0.00045 * fraction * fraction
         if (m.haul > 0 or m.money > 300) and self.rng.random() < bandit_chance:
             targets = (['ore'] if m.haul > 0 else []) + (
                 ['cash'] if m.money > 300 else [])
