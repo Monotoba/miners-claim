@@ -63,6 +63,13 @@ class PygameSmokeTests(unittest.TestCase):
             canvas.fill((0, 0, 0, 0))
             draw_wheelbarrow(canvas, 30, 20, 1, 5)
             self.assertTrue(canvas.get_bounding_rect().width > 0)
+            # Empty, supply and ore carts must produce visibly different images.
+            images = []
+            for cargo in ('empty', 'supplies', 'ore'):
+                canvas.fill((0, 0, 0, 0))
+                draw_wheelbarrow(canvas, 30, 20, 1, 4, cargo)
+                images.append(pygame.image.tobytes(canvas, 'RGBA'))
+            self.assertEqual(len(set(images)), 3)
         finally:
             pygame.quit()
 
