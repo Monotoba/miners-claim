@@ -22,5 +22,24 @@ class PygameSmokeTests(unittest.TestCase):
         self.assertFalse(pygame.get_init())
 
 
+    def test_all_terrain_tiles_and_miner_render(self):
+        try:
+            import pygame
+        except ImportError:
+            self.skipTest('pygame-ce not installed in this environment')
+        os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
+        os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
+        from miners_claim.app import draw_terrain, draw_miner, TILE, COLORS
+        pygame.init()
+        try:
+            canvas = pygame.Surface((TILE * 4, TILE * 4))
+            for tile in COLORS:
+                with self.subTest(tile=tile):
+                    draw_terrain(canvas, tile, 0, 0, 13, 19)
+            draw_miner(canvas, TILE, TILE)
+        finally:
+            pygame.quit()
+
+
 if __name__ == '__main__':
     unittest.main()
