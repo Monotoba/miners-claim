@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 import pygame
 from .display import choose_scale, viewport
-from .town import draw_town, draw_store, draw_assay
+from .town import draw_town, draw_store, draw_assay, draw_bank, draw_saloon
 from .bitmapfont import PixelFont
 from .context import legend, WheelbarrowCargo
 from .engine import (Game, WIDTH, HEIGHT, TILE, AIR, GRASS, DIRT1, DIRT2, DIRT3,
@@ -143,10 +143,11 @@ def main(argv=None):
     clock=pygame.time.Clock()
     save_path=Path.home()/'.local'/'share'/'miners-claim'/SAVE_NAME
     game=Game.import_qb64(args.load_qb64) if args.load_qb64 else Game(seed=args.seed)
-    sale_input='';name_input='';scores=[];move_delay=0
+    sale_input='';bank_input='';name_input='';scores=[];move_delay=0
     camera_x=camera_y=0
     facing=-1
     cart=WheelbarrowCargo()
+    frame_number=0
     running=True
     while running:
         for event in pygame.event.get():
@@ -163,7 +164,7 @@ def main(argv=None):
                     surface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
                 continue
             if key==pygame.K_ESCAPE:
-                if game.state=='assay': game.state='mine'
+                if game.state in ('assay','bank','saloon'): game.state='mine'
                 elif game.state in ('mine','store'): game._end_run('You abandoned the claim.')
                 else: running=False
                 continue
@@ -183,6 +184,10 @@ def main(argv=None):
                     if game.enter_assay():
                         cart.entered_assay()
                         sale_input=''
+                elif key==pygame.K_b:
+                    if game.enter_bank(): bank_input=''
+                elif key==pygame.K_n:
+                    game.enter_saloon()
             elif game.state=='assay':
                 if pygame.K_0<=key<=pygame.K_9 and len(sale_input)<6:
                     sale_input+=chr(key)
@@ -192,6 +197,26 @@ def main(argv=None):
                 elif key==pygame.K_a: game.sell(game.miner.haul);sale_input=''
                 elif key==pygame.K_c: sale_input=''
                 elif key in (pygame.K_l,pygame.K_m): game.state='mine'
+            elif game.state=='bank':
+                if pygame.K_0<=key<=pygame.K_9 and len(bank_input)<8:
+                    bank_input+=chr(key)
+                elif key==pygame.K_BACKSPACE:
+                    bank_input=bank_input[:-1]
+                elif key==pygame.K_c:
+                    bank_input=''
+                elif key==pygame.K_d and bank_input:
+                    game.deposit(int(bank_input));bank_input=''
+                elif key==pygame.K_w and bank_input:
+                    game.withdraw(int(bank_input));bank_input=''
+                elif key==pygame.K_l:
+                    game.state='mine'
+            elif game.state=='saloon':
+                if key==pygame.K_d:
+                    game.buy_drink()
+                elif key==pygame.K_p:
+                    game.play_cards()
+                elif key==pygame.K_l:
+                    game.state='mine'
             elif game.state in ('nameentry','winner'):
                 if key==pygame.K_RETURN:
                     scores.append((name_input.strip()[:12] or 'MINER',game.final_score or game.miner.money+game.miner.haul,game.final_depth or game.depth_feet))
@@ -199,7 +224,7 @@ def main(argv=None):
                     game=Game();cart=WheelbarrowCargo();name_input='';game.state='store'
                 elif key==pygame.K_BACKSPACE: name_input=name_input[:-1]
                 elif event.unicode.isprintable() and len(name_input)<12: name_input+=event.unicode
-            if key==pygame.K_F5 and game.state in ('mine','store','assay'):
+            if key==pygame.K_F5 and game.state in ('mine','store','assay','bank','saloon'):
                 try: game.save(save_path);game.message=f'Saved to {save_path}'
                 except OSError as ex: game.message=f'Save failed: {ex}'
             if key==pygame.K_F9:
@@ -220,6 +245,7 @@ def main(argv=None):
                     facing=dx
                 move_delay=4
         game.tick()
+        frame_number+=1
         cart.update(game.miner)
         frame.fill((15,13,23))
         m=game.miner
@@ -238,7 +264,7 @@ def main(argv=None):
                         pygame.draw.circle(frame,(255,255,211),(px+10,py+10),1)
             # Buildings occupy only the first two sky rows; draw above terrain,
             # then draw the player in the foreground so doors never hide the miner.
-            draw_town(frame, camera_x, camera_y, font)
+            draw_town(frame, camera_x, camera_y, font, game.town_layout, frame_number)
             px=(m.x-camera_x)*TILE;py=HUD+(m.y-camera_y)*TILE
             draw_miner(frame, px, py)
             if cart.should_draw(m):
@@ -248,12 +274,16 @@ def main(argv=None):
                 if 0<=x<SW and HUD<=y<SH-MSG:
                     pygame.draw.circle(frame,(240,65,42),(x,y),5)
             pygame.draw.rect(frame,(42,35,25),(0,0,SW,HUD))
-            draw_text(frame,font,f'${m.money}  HAUL ${m.haul}/{game.capacity}  LIFE {m.lives}  DEPTH {game.depth_feet}ft',3,2)
+            draw_text(frame,font,f'${m.money} BANK ${game.bank_balance} HAUL ${m.haul}/{game.capacity} LIFE {m.lives}',3,2)
             draw_text(frame,font,f'F{m.food} W{m.water} L{m.ladders} TNT{m.tnt}  Tools:{"S" if m.shovel else "-"}{"P" if m.pickaxe else "-"}{"Lan" if m.lantern else ""}',3,13)
         elif game.state=='store':
             draw_store(frame, font, large, m, PRICES)
         elif game.state=='assay':
             draw_assay(frame, font, large, m, sale_input)
+        elif game.state=='bank':
+            draw_bank(frame, font, large, m, game.bank_balance, bank_input)
+        elif game.state=='saloon':
+            draw_saloon(frame, font, large, m)
         else:
             draw_text(frame,large,'YOU WON!' if game.state=='winner' else 'GAME OVER',95,35,(236,185,80))
             draw_text(frame,font,f'Score: ${game.final_score}   Depth: {game.final_depth}ft',47,80)
