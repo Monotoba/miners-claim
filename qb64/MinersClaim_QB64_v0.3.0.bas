@@ -53,7 +53,7 @@ CONST WINW = SCRW * SCREEN_SCALE
 CONST WINH = SCRH * SCREEN_SCALE
 
 CONST HUDH = 24
-CONST MSGH = 16
+CONST MSGH = 32 ' Two 16-pixel footer rows
 CONST VIEWX = 0
 CONST VIEWY = HUDH
 CONST VIEWW = SCRW
@@ -2576,21 +2576,21 @@ SUB DrawMessageBar
     LINE (0, SCRH - MSGH)-(SCRW - 1, SCRH - 1), _RGB32(0, 0, 0), BF
     LINE (0, SCRH - MSGH)-(SCRW - 1, SCRH - MSGH), _RGB32(40, 80, 210)
     COLOR _RGB32(255, 255, 160), _RGB32(0, 0, 0)
-    _PRINTSTRING (2, SCRH - 13), LEFT$(Msg, 39)
+    _PRINTSTRING (2, SCRH - 16), LEFT$(Msg, 39)
     IF GameState = ST_MINE OR GameState = ST_ENCOUNTER THEN
         COLOR _RGB32(250, 207, 121), _RGB32(0, 0, 0)
         IF HazardKind = 2 THEN
-            _PRINTSTRING (4, SCRH - MSGH - 9), "GAS LEAK - MOVE AWAY!"
+            _PRINTSTRING (4, SCRH - MSGH), "GAS LEAK - MOVE AWAY!"
         ELSEIF HazardKind = 1 THEN
-            _PRINTSTRING (4, SCRH - MSGH - 9), "WATER SEEPAGE - MOVE AWAY!"
+            _PRINTSTRING (4, SCRH - MSGH), "WATER SEEPAGE - MOVE AWAY!"
         ELSEIF Miner.y <= SURFACE_Y THEN
             IF TownLegacy THEN
-                _PRINTSTRING (4, SCRH - MSGH - 9), "M STORE  S ASSAY  EAST MINE"
+                _PRINTSTRING (4, SCRH - MSGH), "M STORE  S ASSAY  EAST MINE"
             ELSE
-                _PRINTSTRING (4, SCRH - MSGH - 9), "WEST M STORE B BANK S ASSAY N SALOON"
+                _PRINTSTRING (4, SCRH - MSGH), "WEST M STORE B BANK S ASSAY N SALOON"
             END IF
         ELSE
-            _PRINTSTRING (4, SCRH - MSGH - 9), "J JUMP L LADDER T TNT P ORE"
+            _PRINTSTRING (4, SCRH - MSGH), "J JUMP L LADDER T TNT P ORE"
         END IF
     END IF
 END SUB
@@ -2726,17 +2726,17 @@ SUB DrawAssay
     LINE (244, 144)-(276, 144), _RGB32(80, 60, 35)
 
     ' Transaction panel.
-    LINE (10, 168)-(310, 195), _RGB32(10, 10, 10), BF
-    LINE (10, 168)-(310, 195), _RGB32(90, 90, 130), B
+    LINE (10, 162)-(310, SCRH - 1), _RGB32(10, 10, 10), BF
+    LINE (10, 162)-(310, SCRH - 1), _RGB32(90, 90, 130), B
 
     COLOR _RGB32(120, 255, 120), _RGB32(10, 10, 10)
-    _PRINTSTRING (18, 172), "Money $" + LTRIM$(STR$(Miner.money)) + "   Haul $" + LTRIM$(STR$(Miner.haul))
+    _PRINTSTRING (18, 165), "Money $" + LTRIM$(STR$(Miner.money)) + "   Haul $" + LTRIM$(STR$(Miner.haul))
 
     COLOR _RGB32(255, 255, 180), _RGB32(10, 10, 10)
     IF SellInput = "" THEN
-        _PRINTSTRING (18, 184), "Sell amount: _"
+        _PRINTSTRING (18, 183), "Sell amount: _"
     ELSE
-        _PRINTSTRING (18, 184), "Sell amount: $" + SellInput
+        _PRINTSTRING (18, 183), "Sell amount: $" + SellInput
     END IF
 
     COLOR _RGB32(220, 220, 220), _RGB32(38, 24, 14)
@@ -2746,9 +2746,9 @@ SUB DrawAssay
 
     COLOR _RGB32(255, 255, 160), _RGB32(38, 24, 14)
     IF LEN(Msg) > 39 THEN
-        _PRINTSTRING (4, 198 - 10), LEFT$(Msg, 39)
+        _PRINTSTRING (4, 82), LEFT$(Msg, 39)
     ELSE
-        _PRINTSTRING (4, 198 - 10), Msg
+        _PRINTSTRING (4, 82), Msg
     END IF
 END SUB
 
@@ -2786,13 +2786,15 @@ SUB DrawHighScores
     NEXT i
 
     COLOR _RGB32(120, 255, 120), _RGB32(38, 24, 14)
-    _PRINTSTRING (40, 172), "N New Game   L Load Game   Q Quit"
+    _PRINTSTRING (40, 168), "N New Game   L Load Game   Q Quit"
 
-    COLOR _RGB32(255, 255, 160), _RGB32(38, 24, 14)
+    ' A separate 16-pixel row avoids overlaying the score menu.
+    LINE (0, SCRH - 16)-(SCRW - 1, SCRH - 1), _RGB32(20, 16, 18), BF
+    COLOR _RGB32(255, 255, 160), _RGB32(20, 16, 18)
     IF LEN(Msg) > 39 THEN
-        _PRINTSTRING (6, 192), LEFT$(Msg, 39)
+        _PRINTSTRING (6, SCRH - 16), LEFT$(Msg, 39)
     ELSE
-        _PRINTSTRING (6, 192), Msg
+        _PRINTSTRING (6, SCRH - 16), Msg
     END IF
 END SUB
 
