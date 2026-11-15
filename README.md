@@ -1,5 +1,10 @@
 # Miner's Claim
 
+[![CI](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml)
+[![License: MC-NSAL 1.0](https://img.shields.io/badge/license-MC--NSAL%201.0-blue)](LICENSE)
+![Project status: QB64 archival baseline](https://img.shields.io/badge/status-QB64%20archive-informational)
+[![Latest release](https://img.shields.io/github/v/release/Monotoba/miners-claim?display_name=tag&label=release)](https://github.com/Monotoba/miners-claim/releases)
+
 **Miner's Claim** is a retro-style, side-scrolling mining game originally written in QB64.
 
 Copyright © 2026 Randall L. Morgan.
@@ -29,6 +34,14 @@ python3 -m unittest discover -s tests -v
 ```
 
 Static tests do not validate QB64 runtime execution or CoCo hardware compatibility.
+
+## Continuous integration and releases
+
+The [GitHub Actions CI workflow](.github/workflows/ci.yml) checks archived QB64 source integrity and source-derived specification assertions on Linux and Windows using Python 3.10 and 3.13. It runs on pushes to `main`, pull requests, and manual dispatch.
+
+When a tag matching `v*` is pushed, **after all CI test jobs pass**, the workflow creates a GitHub Release containing source-only ZIP and tar.gz archives plus a `SHA256SUMS` manifest. It does not yet compile QB64 or package playable Python, JavaScript, or CoCo binaries; those release jobs will be added as the respective implementations mature.
+
+No external secrets are required; the release job receives narrowly scoped `contents: write` permission, while test jobs have read-only permissions.
 
 ## Roadmap
 
