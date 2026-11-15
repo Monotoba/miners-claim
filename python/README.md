@@ -38,6 +38,15 @@ The engine now counts **cash in hand plus deposited bank funds** toward the $1,0
 
 **Older Python saves** lacking `town_layout`, and imported original QB64 saves, retain their *legacy* shop placement and the original shaft at x=28. Such games do not have bank or saloon access. New saves include optional `town_layout` and `bank_balance` fields while retaining the `miners-claim-python-v1` identifier; old saved games remain readable. Saloon card display and walking NPC positions are not saved.
 
+## Random encounters on the west–east road
+
+In **new frontier games**, moving horizontally along the surface between the western town and the eastern mine can trigger an NPC encounter. Movement pauses until **Enter**, **Space**, or **Esc** acknowledges the conversation. Encounters cannot happen underground, inside shops, or on imported legacy layouts. After an encounter, 24 more surface steps pass without another encounter.
+
+- **Bank adviser:** When carrying **$300 or more in cash**, the miner has a 1.2% chance per eligible surface step (after the bandit check) of being stopped and encouraged to deposit money at the bank. This encounter never takes cash.
+- **Bandit:** If the miner carries **any unsold ore** or **more than $300 cash**, a bandit can rob the miner. The chance per eligible surface step rises with the west–east position: **0.3% at x=0**, increasing quadratically to **2.3% near the mine at x=72**. The bandit takes **all ore or all pocket cash**, choosing randomly when both are eligible, but never both during the same encounter. The miner keeps equipment, provisions, lives, and bank deposits. The wheelbarrow's ore drawing updates automatically when the ore is stolen.
+
+These are intentionally probabilistic *game mechanics* that extend the original QB64 version, and the probabilities can be adjusted after playtesting. Saving is available again after the encounter is dismissed; the cooldown is transient and not persisted.
+
 ## Context legend and active hazards
 
 The bottom of the screen now has **two separate lines**: a contextual legend identifying nearby ore, equipment controls, or hazards, and the current gameplay message. The mine viewport is nine tiles tall rather than ten to reserve space for the footer; original world coordinates and saving are unchanged.
