@@ -9,9 +9,10 @@ from pathlib import Path
 import json
 import os
 import random
+from .townplan import FRONTIER_SHAFT, near
 
 WIDTH, HEIGHT, TILE = 128, 96, 16
-SURFACE, SHAFT, WIN_GOAL = 2, 28, 1_000_000
+SURFACE, SHAFT, WIN_GOAL = 2, FRONTIER_SHAFT, 1_000_000
 AIR, GRASS, DIRT1, DIRT2, DIRT3, ROCK, GOLD, SILVER, GEM, WATER, GAS, SAND, SNAKE, LADDER, BEDROCK = range(15)
 VALUE = {GOLD: 20, SILVER: 12, GEM: 45}
 PRICES = {'shovel': 10, 'pickaxe': 15, 'wheelbarrow': 30, 'ladders': 20,
@@ -48,7 +49,9 @@ class Game:
         self.world = [[self.base_tile(y) for x in range(WIDTH)] for y in range(HEIGHT)]
         self.loot = [[0] * WIDTH for _ in range(HEIGHT)]
         self.state = 'store'
-        self.message = 'Welcome. Go right to CLAIM; ore is beside that ladder.'
+        self.town_layout = 'frontier'
+        self.bank_balance = 0
+        self.message = 'WEST: stores, bank, assay and saloon. EAST: the mine shaft.'
         self.tnt_active = False
         self.tnt_x = self.tnt_y = self.tnt_frames = 0
         self.jump_grace = 0
@@ -138,8 +141,91 @@ class Game:
         self.message = f'Bought {item}.'
         return True
 
-    def near_store(self): return 0 <= self.miner.x <= 12 and self.miner.y <= 6
-    def near_assay(self): return 10 <= self.miner.x <= 25 and self.miner.y <= 6
+    def near_store(self):
+        return near(self.town_layout, 'mercantile', self.miner.x, self.miner.y)
+
+    def near_assay(self):
+        return near(self.town_layout, 'assay', self.miner.x, self.miner.y)
+
+    def near_bank(self):
+        return near(self.town_layout, 'bank', self.miner.x, self.miner.y)
+
+    def near_saloon(self):
+        return near(self.town_layout, 'saloon', self.miner.x, self.miner.y)
+
+    def enter_bank(self):
+        if self.state == 'mine' and self.near_bank():
+            self.state = 'bank'
+            self.message = 'Bank: enter amount, D deposit or W withdraw.'
+            return True
+        self.message = 'Stand near the BANK and press B.'
+        return False
+
+    def deposit(self, amount: int) -> int:
+        if self.state != 'bank' or amount <= 0:
+            self.message = 'Enter a positive amount to deposit.'
+            return 0
+        if amount > self.miner.money:
+            self.message = 'Not enough cash to deposit.'
+            return 0
+        self.miner.money -= amount
+        self.bank_balance += amount
+        self.message = f'Deposited ${amount}. Bank balance ${self.bank_balance}.'
+        self._check_win()
+        return amount
+
+    def withdraw(self, amount: int) -> int:
+        if self.state != 'bank' or amount <= 0:
+            self.message = 'Enter a positive amount to withdraw.'
+            return 0
+        if amount > self.bank_balance:
+            self.message = 'Insufficient bank funds.'
+            return 0
+        self.bank_balance -= amount
+        self.miner.money += amount
+        self.message = f'Withdrew ${amount}. Bank balance ${self.bank_balance}.'
+        self._check_win()
+        return amount
+
+    def enter_saloon(self):
+        if self.state == 'mine' and self.near_saloon():
+            self.state = 'saloon'
+            self.message = 'Saloon: D drink ($5); P play high-card ($10).'
+            return True
+        self.message = 'Stand near the SALOON and press N.'
+        return False
+
+    def buy_drink(self) -> bool:
+        # A drink is one water provision; it does not alter mining tools.
+        if self.state != 'saloon':
+            return False
+        if self.miner.money < 5:
+            self.message = 'Not enough cash for a drink ($5).'
+            return False
+        self.miner.money -= 5
+        self.miner.water += 1
+        self.message = 'Bought a drink for $5. Water +1.'
+        return True
+
+    def play_cards(self, bet: int = 10) -> int:
+        """Single round of high card; positive means winnings, negative loss.
+
+        Draws one rank per player from 1..13, compares them, pays even
+        money on a win, refunds on a tie. No real-money functionality.
+        """
+        if self.state != 'saloon' or bet <= 0:
+            return 0
+        if self.miner.money < bet:
+            self.message = f'Need ${bet} cash to play.'
+            return 0
+        player = self.rng.randint(1, 13)
+        dealer = self.rng.randint(1, 13)
+        result = (player > dealer) - (player < dealer)
+        delta = bet * result
+        self.miner.money += delta
+        word = 'WON' if delta > 0 else 'LOST' if delta < 0 else 'TIE'
+        self.message = f'Cards: you {player}, dealer {dealer}. {word} ${abs(delta)}.'
+        return delta
 
     def enter_store(self):
         if self.state == 'mine' and self.near_store():
@@ -163,7 +249,7 @@ class Game:
         return sold
 
     def _end_run(self, why: str):
-        self.final_score=self.miner.money+self.miner.haul
+        self.final_score=self.miner.money+self.bank_balance+self.miner.haul
         self.final_depth=self.depth_feet
         self.state='nameentry'
         self.message=why
@@ -180,12 +266,12 @@ class Game:
 
     def _check_gameover(self):
         m=self.miner
-        if self.state == 'mine' and m.money <= 0 and m.haul <= 0 and m.food <= 0 and m.water <= 0 and not m.shovel and not m.pickaxe:
+        if self.state == 'mine' and m.money <= 0 and self.bank_balance <= 0 and m.haul <= 0 and m.food <= 0 and m.water <= 0 and not m.shovel and not m.pickaxe:
             self._end_run('The claim is lost.')
 
     def _check_win(self):
-        if self.state in ('mine','assay') and self.miner.money >= WIN_GOAL:
-            self.final_score=self.miner.money+self.miner.haul
+        if self.state in ('mine','assay','bank','saloon') and self.miner.money + self.bank_balance >= WIN_GOAL:
+            self.final_score=self.miner.money+self.bank_balance+self.miner.haul
             self.final_depth=self.depth_feet
             self.state='winner'; self.message='You won the claim!'
 
@@ -359,7 +445,9 @@ class Game:
         return {'format':'miners-claim-python-v1', 'miner':asdict(self.miner),
                 'world':self.world,'loot':self.loot,'state':self.state,
                 'tnt':[self.tnt_active,self.tnt_x,self.tnt_y,self.tnt_frames],
-                'jump_grace':self.jump_grace}
+                'jump_grace':self.jump_grace,
+                'town_layout':self.town_layout,
+                'bank_balance':self.bank_balance}
 
     @classmethod
     def from_dict(cls,data):
@@ -379,8 +467,15 @@ class Game:
         obj.tnt_active,obj.tnt_x,obj.tnt_y,obj.tnt_frames=data['tnt']
         if obj.tnt_active and (not cls.bounds(obj.tnt_x,obj.tnt_y) or not 0<=obj.tnt_frames<=300):
             raise ValueError('Invalid TNT')
+        obj.town_layout = data.get('town_layout', 'legacy')
+        if obj.town_layout not in ('legacy', 'frontier'):
+            raise ValueError('Invalid town layout')
+        obj.bank_balance = data.get('bank_balance', 0)
+        if type(obj.bank_balance) is not int or obj.bank_balance < 0:
+            raise ValueError('Invalid bank balance')
         obj.state=data['state']
-        if obj.state not in ('mine','store','assay'): raise ValueError('Invalid state')
+        permitted = ('mine','store','assay','bank','saloon') if obj.town_layout == 'frontier' else ('mine','store','assay')
+        if obj.state not in permitted: raise ValueError('Invalid state')
         obj.jump_grace=int(data['jump_grace'])
         obj.message='Saved game loaded.';obj.final_score=obj.final_depth=0
         obj.hazard_kind=None;obj.hazard_exposure=obj.hazard_limit=0
@@ -429,6 +524,7 @@ class Game:
         flat=nums[offset:offset+WIDTH*HEIGHT] if v2 else [0]*(WIDTH*HEIGHT)
         obj.loot=[flat[i:i+WIDTH] for i in range(0,len(flat),WIDTH)]
         obj.state='mine';obj.jump_grace=0
+        obj.town_layout='legacy';obj.bank_balance=0
         obj.message='Imported QB64 save.';obj.final_score=obj.final_depth=0
         obj.hazard_kind=None;obj.hazard_exposure=obj.hazard_limit=0
         return cls.from_dict(obj.to_dict())
