@@ -29,7 +29,7 @@ class TradingRulesTests(unittest.TestCase):
     def test_assay_boundaries_partial_and_full_sale(self):
         game = self.game
         game.state = 'mine'
-        game.miner.x = 13
+        game.miner.x = 31
         self.assertTrue(game.enter_assay())
         game.miner.haul = 45
         cash = game.miner.money
@@ -64,11 +64,11 @@ class TownRenderingTests(unittest.TestCase):
         self.assertEqual(len(visible_facades(0,0)), 2)
         self.assertEqual(len(visible_facades(0,4)), 0)
         facades = visible_facades(19,0)
-        self.assertEqual(len(facades), 1)
-        self.assertEqual(facades[0][0], 'assay')
+        self.assertEqual([label for label, _ in facades], ['bank', 'assay'])
+        self.assertEqual(len(visible_facades(0,0,'legacy')), 2)
 
     def test_town_and_interior_screens_render(self):
-        from miners_claim.town import draw_town, draw_store, draw_assay
+        from miners_claim.town import draw_town, draw_store, draw_assay, draw_bank, draw_saloon
         pygame=self.pygame
         surface = pygame.Surface((320,200))
         font = pygame.font.Font(None, 14)
@@ -79,4 +79,6 @@ class TownRenderingTests(unittest.TestCase):
         self.assertEqual(surface.get_clip(), surface.get_rect())
         draw_store(surface, font, large, game.miner, PRICES)
         draw_assay(surface, font, large, game.miner, '12')
+        draw_bank(surface, font, large, game.miner, 145, '20')
+        draw_saloon(surface, font, large, game.miner)
         self.assertNotEqual(surface.get_at((160,30))[:3],(19,21,27))
