@@ -21,9 +21,22 @@ Optional: `python -m miners_claim --scale 4 --seed 12345`, or import an original
 ## Controls
 
 - At Mercantile: **1–8** purchase equipment; the screen displays cash, item prices, inventory, and which durable tools are already owned. **L** leaves.
-- Mine: **arrow keys** move or dig, **J** jump, **L** place ladder, **M** enter the **Mercantile** (near x=0–12, y≤6), **S** enter the **Assay Office** (near x=10–25, y≤6), **T** drop TNT, **P** collect blasted ore. Surface storefronts and context prompts indicate the shops. The interaction zones intentionally overlap at x=10–12 as they did in the original game.
+- Mine: **arrow keys** move or dig, **J** jump, **L** place ladder, **M** enter the Mercantile, **B** enter the Bank, **S** enter the Assay Office, **N** enter the Saloon, **T** drop TNT, **P** collect blasted ore. On newer maps the buildings have separate, nonoverlapping frontages; imported legacy saves retain the original shop areas.
 - Assay: enter a numeric value and press **Enter** to sell, **A** to sell everything, **C** clear, **L** or **Esc** leave. The screen shows cash and unsold haul.
 - **F5** save, **F9** load. **Esc** quits the current run or returns from assay.
+
+## Frontier town: West and East
+
+**New games** use a spaced western town (Mercantile, Bank, Assay Office and Saloon), followed by an open stretch to the mine shaft **east at world column 72**. Four townspeople wander along the surface; they are decorative and cannot block the player. On the surface, the context legend displays west/east directions and building keys.
+
+- **Mercantile:** Stand within its frontage and press **M** to purchase the existing eight supplies.
+- **Bank:** Press **B**, type an amount, then **D** to deposit or **W** to withdraw. **C** clears the amount and **L** leaves. Depositing/withdrawing is a transfer, never a profit; balances remain available after saving and loading.
+- **Assay Office:** Press **S** and sell all or part of the mined ore as before.
+- **Saloon:** Press **N** to enter; **D** buys a **$5 drink** (adds one water provision); **P** plays one hand of **high-card for $10**, drawing a rank for the miner and the house. Higher rank wins $10 net; lower rank loses $10; ties do not change the cash balance. The two cards are displayed. **L** returns to town. These are in-game dollars only.
+
+The engine now counts **cash in hand plus deposited bank funds** toward the $1,000,000 victory target and final score (plus unsold ore for score). This is an intentional change to original QB64 cash-only victory, preventing deposits from making progress disappear. The Assay Office still pays only into cash in hand.
+
+**Older Python saves** lacking `town_layout`, and imported original QB64 saves, retain their *legacy* shop placement and the original shaft at x=28. Such games do not have bank or saloon access. New saves include optional `town_layout` and `bank_balance` fields while retaining the `miners-claim-python-v1` identifier; old saved games remain readable. Saloon card display and walking NPC positions are not saved.
 
 ## Context legend and active hazards
 
@@ -53,7 +66,7 @@ Saves use a validated JSON format in `~/.local/share/miners-claim/miners_claim_p
 ## Differences and incomplete items
 
 - Terrain uses a seedable Python RNG and will not match QB64 byte-for-byte.
-- Graphics now include surface Mercantile and Assay Office buildings, redesigned trading interiors, procedural pixel-art textures, and a more detailed miner, without external image assets. Town buildings are visual overlays on the original world (no terrain/save-file changes). Artwork is still provisional; no sound effects yet.
+- Graphics now include four separated western town buildings, a larger distance to the eastern mine, animated townspeople, redesigned interiors and playing cards, procedural pixel-art textures, and a more detailed miner, without external image assets. Town buildings are visual overlays on the original world (no terrain/save-file changes). Artwork is still provisional; no sound effects yet.
 - High scores are currently held only for the running session (no persistent score file).
 - The original screen art and some menu messages are not reproduced verbatim.
 - Rules are isolated and covered by headless tests. Window sizing and letterboxing have additional unit tests. Player testing has confirmed the earlier game runs; the latest font, hazard and cart changes require additional desktop playtesting.
