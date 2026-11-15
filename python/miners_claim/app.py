@@ -4,6 +4,7 @@ import argparse
 from pathlib import Path
 import pygame
 from .display import choose_scale, viewport
+from .town import draw_town, draw_store, draw_assay
 from .engine import (Game, WIDTH, HEIGHT, TILE, AIR, GRASS, DIRT1, DIRT2, DIRT3,
                      ROCK, GOLD, SILVER, GEM, WATER, GAS, SAND, SNAKE, LADDER, BEDROCK, PRICES)
 
@@ -185,25 +186,18 @@ def main(argv=None):
                     if game.loot[y][x]:
                         pygame.draw.circle(frame,(252,232,130),(px+11,py+11),3)
                         pygame.draw.circle(frame,(255,255,211),(px+10,py+10),1)
-            px=(m.x-camera_x)*TILE;py=HUD+(m.y-camera_y)*TILE
-            draw_miner(frame, px, py)
+            # Buildings occupy only the first two sky rows; draw above terrain,\n            # then draw the player in the foreground so doors never hide the miner.\n            draw_town(frame, camera_x, camera_y, font)\n            px=(m.x-camera_x)*TILE;py=HUD+(m.y-camera_y)*TILE\n            draw_miner(frame, px, py)
             if game.tnt_active:
                 x=(game.tnt_x-camera_x)*TILE+8;y=HUD+(game.tnt_y-camera_y)*TILE+7
                 if 0<=x<SW and HUD<=y<SH-MSG:
                     pygame.draw.circle(frame,(240,65,42),(x,y),5)
             pygame.draw.rect(frame,(42,35,25),(0,0,SW,HUD))
             draw_text(frame,font,f'${m.money}  HAUL ${m.haul}/{game.capacity}  LIFE {m.lives}  DEPTH {game.depth_feet}ft',3,2)
-            draw_text(frame,font,f'F{m.food} W{m.water} L{m.ladders} TNT{m.tnt}  Tools:{"S" if m.shovel else "-"}{"P" if m.pickaxe else "-"}{"Lan" if m.lantern else ""}',3,13)
+            draw_text(frame,font,f'F{m.food} W{m.water} L{m.ladders} TNT{m.tnt}  Tools:{"S" if m.shovel else "-"}{"P" if m.pickaxe else "-"}{"Lan" if m.lantern else ""}',3,13)\n            if m.y <= 6:\n                if game.near_store() and game.near_assay():\n                    draw_text(frame,font,'M: MERCANTILE   S: ASSAY OFFICE', 84, HUD+144, (250,218,148))\n                elif game.near_store():\n                    draw_text(frame,font,'M: ENTER MERCANTILE', 100, HUD+144, (250,218,148))\n                elif game.near_assay():\n                    draw_text(frame,font,'S: ENTER ASSAY OFFICE', 94, HUD+144, (250,218,148))
         elif game.state=='store':
-            draw_text(frame,large,'MERCANTILE — MINER\'S CLAIM',20,12,(246,205,95))
-            for i,(item,price) in enumerate(PRICES.items()):
-                draw_text(frame,font,f'{i+1}. {item:<12} ${price:>2}',48,39+i*14)
-            draw_text(frame,font,f'Cash: ${m.money}    Press L to leave',35,159)
+            draw_store(frame, font, large, m, PRICES)
         elif game.state=='assay':
-            draw_text(frame,large,'ASSAY OFFICE',70,18,(238,198,96))
-            draw_text(frame,font,f'Haul: ${m.haul}      Cash: ${m.money}',55,58)
-            draw_text(frame,font,f'Sell amount: ${sale_input}_',55,85)
-            draw_text(frame,font,'Enter=Sell  A=All  C=Clear  L=Exit',17,122)
+            draw_assay(frame, font, large, m, sale_input)
         else:
             draw_text(frame,large,'YOU WON!' if game.state=='winner' else 'GAME OVER',95,35,(236,185,80))
             draw_text(frame,font,f'Score: ${game.final_score}   Depth: {game.final_depth}ft',47,80)
