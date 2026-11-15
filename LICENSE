@@ -1,0 +1,138 @@
+Miner's Claim Noncommercial Share-Alike License
+Version 1.0
+
+Copyright © 2026 Randall L. Morgan. All rights reserved except as expressly licensed below.
+
+1. Definitions
+
+Software means Miner's Claim, including its source code, executable code, game logic, accompanying original assets, and modifications or derivative works, except components expressly governed by separate licenses.
+
+Licensor means the copyright holder authorized to grant rights to the applicable Software.
+
+You means any individual or legal entity exercising rights under this License.
+
+Derivative Work means a modification, adaptation, translation, port, or other work based on copyrightable portions of the Software, to the extent recognized by applicable copyright law.
+
+Corresponding Source means the preferred, human-readable form of the Software for modification, including necessary build scripts, configuration files, and instructions for reproducing distributed builds, excluding generally available development tools.
+
+Commercial Use means use primarily intended for or directed toward monetary compensation or commercial advantage, including selling, licensing for payment, incorporating the Software into commercial products or services, or distributing or operating the Software as part of revenue-generating services.
+
+2. Grant of Noncommercial Rights
+
+Subject to compliance with this License, the Licensor grants You a worldwide, royalty-free, nonexclusive, nontransferable copyright license, with permission for recipients to receive the same rights directly under this License, to:
+
+a. Use and execute the Software for noncommercial purposes.
+
+b. Study, inspect, and modify the Software.
+
+c. Create Derivative Works.
+
+d. Reproduce and distribute the Software and Derivative Works for noncommercial purposes.
+
+e. Share the Software and Derivative Works with others, provided all applicable requirements of this License are satisfied.
+
+These permissions apply only to rights the Licensor has authority to grant.
+
+3. Commercial Use Restrictions
+
+Commercial Use is not permitted under this License.
+
+Anyone wishing to use the Software commercially must first obtain a separate, express written license from the authorized copyright holder or holders.
+
+Permission to use the Software commercially shall not be inferred from public availability, source-code access, or permission granted to another party.
+
+4. Copyleft and Share-Alike
+
+Any distributed Derivative Work must:
+
+a. Be licensed under this same License, Version 1.0.
+
+b. Include the complete text of this License.
+
+c. Preserve all required original copyright and attribution notices.
+
+d. Identify material modifications and their contributors.
+
+e. Make its complete Corresponding Source available under this License.
+
+No additional copyright-license restrictions may be imposed that prevent recipients from exercising the noncommercial rights granted herein.
+
+Independently developed software that merely accompanies the Software and does not form a Derivative Work is not automatically subject to this License.
+
+5. Source-Code Availability
+
+Whenever You distribute an executable or other non-source form of the Software or a Derivative Work, You must provide the corresponding complete source code at no additional charge.
+
+The Corresponding Source must be supplied with the distribution or through a clearly identified, publicly accessible download location.
+
+When You make the Software available for interactive use over a network, including through a website, You must provide users with a clearly visible means of obtaining the Corresponding Source of the version being operated.
+
+The Corresponding Source must remain available for as long as the corresponding executable distribution or hosted version is made available by You.
+
+6. Mandatory Attribution
+
+Every distributed copy and Derivative Work must preserve:
+
+a. The original copyright notice.
+
+b. The title Miner's Claim and identification of the original project.
+
+c. A reference to the original project's source repository, where available.
+
+d. Copyright and attribution notices for identifiable contributors whose work is incorporated.
+
+e. A statement identifying the work as original or modified.
+
+f. This License and any applicable notices concerning separately licensed material.
+
+Where the Software provides a credits, About, or equivalent interface, these acknowledgments must be reasonably accessible within that interface.
+
+Derivative Works must clearly acknowledge their relationship to Miner's Claim without implying endorsement by the original author or other contributors.
+
+7. Identification of Modifications
+
+Anyone distributing a Derivative Work must identify material changes, the contributors responsible for those changes where known, and the applicable version or revision.
+
+The modification history must be reasonably accessible with the source distribution.
+
+8. Separate Commercial Licensing
+
+Each copyright holder retains the right to license material they own separately, including for commercial purposes.
+
+Nothing in this License transfers copyright ownership of third-party contributions to the original project owner.
+
+Commercial relicensing of third-party contributions requires appropriate additional permission from their respective copyright holders.
+
+9. No Trademark License
+
+This License does not grant trademark rights in the title, logos, or branding associated with Miner's Claim.
+
+Accurate attribution and identification of Derivative Works are permitted as required by this License, but no recipient may claim endorsement or official status without authorization.
+
+10. Termination and Reinstatement
+
+Rights granted under this License terminate automatically upon a material violation of its conditions.
+
+Rights are provisionally reinstated when the violation ceases, provided the applicable copyright holder has not already issued a notice of termination.
+
+If the copyright holder notifies You of a violation, permanent reinstatement may occur when the violation is remedied within 30 days of receipt of that notice, unless the copyright holder explicitly advises otherwise.
+
+Termination does not automatically terminate the licenses of downstream recipients who remain in compliance.
+
+11. Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW.
+
+12. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, THE COPYRIGHT HOLDERS AND CONTRIBUTORS SHALL NOT BE LIABLE FOR DAMAGES ARISING FROM THE USE, MODIFICATION, DISTRIBUTION, OR INABILITY TO USE THE SOFTWARE.
+
+13. Severability
+
+If any provision is held unenforceable, the remaining provisions shall continue in effect to the extent permitted by applicable law.
+
+14. Reservation of Rights
+
+All rights not expressly granted are reserved by their respective copyright holders.
+
+No patent or trademark rights are granted by implication.
