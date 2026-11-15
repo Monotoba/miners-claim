@@ -20,7 +20,7 @@ class StreetEncounterTests(unittest.TestCase):
         with patch.object(self.game.rng, 'random', return_value=0):
             self.assertFalse(self.game._check_street_encounter())
         self.game.miner.money = 300
-        with patch.object(self.game.rng, 'random', side_effect=[.99, 0]):
+        with patch.object(self.game.rng, 'random', return_value=0):
             self.assertTrue(self.game._check_street_encounter())
         self.assertEqual(self.game.encounter_kind, 'banker')
         self.assertEqual(self.game.miner.money, 300)
@@ -101,7 +101,7 @@ class StreetEncounterTests(unittest.TestCase):
     def test_horizontal_surface_walk_can_trigger_encounter(self):
         m = self.game.miner
         m.x, m.y, m.money = 31, 1, 300
-        with patch.object(self.game.rng, 'random', side_effect=[.9, 0]):
+        with patch.object(self.game.rng, 'random', return_value=0):
             self.assertTrue(self.game.try_move(1, 0))
         self.assertEqual(m.x, 32)
         self.assertEqual(self.game.state, 'encounter')
