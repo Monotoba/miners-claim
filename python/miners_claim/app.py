@@ -121,6 +121,34 @@ def draw_wheelbarrow(surface, px, py, facing, steps, cargo='ore'):
                      (px+8+direction*5,py+9), 2)
 
 
+def draw_encounter(surface, font, large, kind, message):
+    """Display a nonblocking-to-render, blocking-to-movement street encounter."""
+    pygame.draw.rect(surface, (9, 10, 17), (16, 45, 288, 111))
+    border = (211, 170, 89) if kind == 'banker' else (198, 80, 66)
+    pygame.draw.rect(surface, border, (16, 45, 288, 111), 2)
+    title = 'FRIENDLY BANKER' if kind == 'banker' else 'HIGHWAY BANDIT!'
+    draw_text(surface, large, title, 26, 55, border)
+    # A recognizable, simple standing figure for each encounter.
+    skin = (218, 166, 118)
+    pygame.draw.circle(surface, skin, (46, 107), 11)
+    pygame.draw.rect(surface, (35, 65, 91) if kind == 'banker' else
+                     (83, 49, 44), (33, 118, 26, 20))
+    pygame.draw.rect(surface, (61, 47, 33), (31, 98, 30, 5))
+    if kind == 'banker':
+        pygame.draw.rect(surface, (61, 47, 33), (37, 89, 18, 10))
+        draw_text(surface, font, 'BANK', 34, 141, (242, 220, 150))
+        lines = ['YOU ARE CARRYING $300 OR MORE.',
+                 'DEPOSIT CASH AT THE BANK',
+                 'TO KEEP IT SAFE FROM BANDITS.']
+    else:
+        pygame.draw.rect(surface, (42, 31, 31), (32, 106, 27, 6))
+        lines = [message, 'THE BANK BALANCE IS SAFE.', 'WATCH YOUR BACK OUT EAST!']
+    for i, line in enumerate(lines):
+        draw_text(surface, font, line[:36], 73, 91 + i * 15,
+                  (237, 217, 179))
+    draw_text(surface, font, 'ENTER / SPACE: CONTINUE', 84, 143, border)
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description="Miner's Claim (Python edition)")
     parser.add_argument('--scale', choices=['auto', *map(str, range(1, 9))], default='auto',
@@ -162,6 +190,10 @@ def main(argv=None):
                     window_size = pygame.display.get_surface().get_size()
                     fullscreen = True
                     surface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                continue
+            if game.state == 'encounter':
+                if key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_ESCAPE):
+                    game.dismiss_encounter()
                 continue
             if key==pygame.K_ESCAPE:
                 if game.state in ('assay','bank','saloon'): game.state='mine'
@@ -249,7 +281,7 @@ def main(argv=None):
         cart.update(game.miner)
         frame.fill((15,13,23))
         m=game.miner
-        if game.state=='mine':
+        if game.state in ('mine','encounter'):
             # Fixed-size logical viewport, draw only visible tiles.
             camera_x=max(0,min(WIDTH-20,m.x-10))
             camera_y=max(0,min(HEIGHT-9,m.y-4))
@@ -276,6 +308,8 @@ def main(argv=None):
             pygame.draw.rect(frame,(42,35,25),(0,0,SW,HUD))
             draw_text(frame,font,f'${m.money} BANK ${game.bank_balance} HAUL ${m.haul}/{game.capacity} LIFE {m.lives}',3,2)
             draw_text(frame,font,f'F{m.food} W{m.water} L{m.ladders} TNT{m.tnt}  Tools:{"S" if m.shovel else "-"}{"P" if m.pickaxe else "-"}{"Lan" if m.lantern else ""}',3,13)
+            if game.state == 'encounter':
+                draw_encounter(frame, font, large, game.encounter_kind, game.message)
         elif game.state=='store':
             draw_store(frame, font, large, m, PRICES)
         elif game.state=='assay':
