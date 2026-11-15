@@ -1,0 +1,8 @@
+# Preserve the recovered QB64 archival bytes exactly on every platform.
+# These files are checked against their original SHA-256 hashes by CI.
+original-qb64/*.bas -text
+
+# New project infrastructure has normalized line endings.
+*.py text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
