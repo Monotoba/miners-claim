@@ -33,6 +33,26 @@ class QB64PortStaticTests(unittest.TestCase):
         self.assertIn('SUB PresentFrame', TEXT)
         self.assertIn('_PUTIMAGE (0, 0)-(WINW - 1, WINH - 1)', TEXT)
 
+    def test_footer_and_high_score_text_fit_logical_canvas(self):
+        # QB64's default font is 8x16. Text starting at y=192 is
+        # clipped by eight pixels on a 200-pixel logical screen.
+        self.assertIn('CONST SCRH = 200', TEXT)
+        self.assertIn('CONST MSGH = 32', TEXT)
+        footer = block('DrawMessageBar')
+        self.assertIn('_PRINTSTRING (2, SCRH - 16)', footer)
+        self.assertIn('_PRINTSTRING (4, SCRH - MSGH)', footer)
+        self.assertNotIn('SCRH - 13', footer)
+        self.assertNotIn('SCRH - MSGH - 9', footer)
+        scores = block('DrawHighScores')
+        self.assertIn('_PRINTSTRING (6, SCRH - 16)', scores)
+        self.assertNotIn('_PRINTSTRING (6, 192)', scores)
+        self.assertIn('_PRINTSTRING (40, 168)', scores)
+        assay = block('DrawAssay')
+        self.assertIn('_PRINTSTRING (18, 183)', assay)
+        self.assertNotIn('_PRINTSTRING (18, 184)', assay)
+        self.assertIn('_PRINTSTRING (4, 82)', assay)
+        self.assertNotIn('198 - 10', assay)
+
     def test_frontier_and_legacy_geography(self):
         for item in ('CONST CLAIM_SHAFT_X = 72', 'CONST LEGACY_SHAFT_X = 28',
                      'DrawFrontierBuilding 1, 11', 'DrawFrontierBuilding 15, 9',
