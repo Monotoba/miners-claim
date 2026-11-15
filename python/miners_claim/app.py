@@ -6,7 +6,7 @@ import pygame
 from .display import choose_scale, viewport
 from .town import draw_town, draw_store, draw_assay
 from .bitmapfont import PixelFont
-from .context import legend, returning_with_wheelbarrow
+from .context import legend, WheelbarrowCargo
 from .engine import (Game, WIDTH, HEIGHT, TILE, AIR, GRASS, DIRT1, DIRT2, DIRT3,
                      ROCK, GOLD, SILVER, GEM, WATER, GAS, SAND, SNAKE, LADDER, BEDROCK, PRICES)
 
@@ -86,8 +86,8 @@ def draw_miner(surface, px, py, moving=False):
     pygame.draw.rect(surface,(42,37,36),(px+11,py+6,1,1))
 
 
-def draw_wheelbarrow(surface, px, py, facing, steps):
-    """Animate a loaded barrow in front of a miner walking toward ASSAY."""
+def draw_wheelbarrow(surface, px, py, facing, steps, cargo='ore'):
+    """Draw an empty, supply-loaded, or ore-loaded wheelbarrow."""
     direction = -1 if facing < 0 else 1
     cx = px - 10 if direction < 0 else px + 26
     wobble = steps % 2
@@ -101,8 +101,20 @@ def draw_wheelbarrow(surface, px, py, facing, steps):
         tray.topleft, tray.topright, (tray.right-3, tray.bottom),
         (tray.left+3, tray.bottom)))
     pygame.draw.line(surface, (209, 200, 177), tray.topleft, tray.topright)
-    for ox, oy in ((-4,5),(0,3),(4,5)):
-        pygame.draw.circle(surface, (220, 185, 51), (cx+ox,py+oy-wobble), 2)
+    if cargo == 'ore':
+        for ox, oy in ((-4,5),(0,3),(4,5)):
+            pygame.draw.circle(surface, (220, 185, 51),
+                               (cx+ox,py+oy-wobble), 2)
+    elif cargo == 'supplies':
+        # Provisions and boxed mining supplies, never represented as ore.
+        pygame.draw.rect(surface, (161, 108, 66),
+                         (cx-6,py+1-wobble,7,5))
+        pygame.draw.line(surface, (218, 171, 91),
+                         (cx-5,py+2-wobble),(cx-1,py+2-wobble))
+        pygame.draw.rect(surface, (78, 134, 170),
+                         (cx+1,py+2-wobble,5,4))
+        pygame.draw.rect(surface, (232, 203, 118),
+                         (cx-2,py-1-wobble,3,3))
     pygame.draw.line(surface, (113, 76, 44), (cx,py+8),
                      (px+8+direction*5,py+9), 2)
     pygame.draw.line(surface, (248, 197, 143), (px+8,py+8),
@@ -134,6 +146,7 @@ def main(argv=None):
     sale_input='';name_input='';scores=[];move_delay=0
     camera_x=camera_y=0
     facing=-1
+    cart=WheelbarrowCargo()
     running=True
     while running:
         for event in pygame.event.get():
@@ -156,15 +169,20 @@ def main(argv=None):
                 continue
             if game.state=='store':
                 if pygame.K_1<=key<=pygame.K_8:
-                    game.buy(list(PRICES)[key-pygame.K_1])
-                elif key==pygame.K_l: game.state='mine'
+                    cart.purchased(game.buy(list(PRICES)[key-pygame.K_1]))
+                elif key==pygame.K_l:
+                    game.state='mine'
+                    cart.left_mercantile(game.miner)
             elif game.state=='mine':
                 if key==pygame.K_j: game.jump()
                 elif key==pygame.K_l: game.ladder()
                 elif key==pygame.K_t: game.drop_tnt()
                 elif key==pygame.K_p: game.pickup()
                 elif key==pygame.K_m: game.enter_store()
-                elif key==pygame.K_s: game.enter_assay();sale_input=''
+                elif key==pygame.K_s:
+                    if game.enter_assay():
+                        cart.entered_assay()
+                        sale_input=''
             elif game.state=='assay':
                 if pygame.K_0<=key<=pygame.K_9 and len(sale_input)<6:
                     sale_input+=chr(key)
@@ -178,14 +196,17 @@ def main(argv=None):
                 if key==pygame.K_RETURN:
                     scores.append((name_input.strip()[:12] or 'MINER',game.final_score or game.miner.money+game.miner.haul,game.final_depth or game.depth_feet))
                     scores.sort(key=lambda row:row[1],reverse=True);scores=scores[:10]
-                    game=Game();name_input='';game.state='store'
+                    game=Game();cart=WheelbarrowCargo();name_input='';game.state='store'
                 elif key==pygame.K_BACKSPACE: name_input=name_input[:-1]
                 elif event.unicode.isprintable() and len(name_input)<12: name_input+=event.unicode
             if key==pygame.K_F5 and game.state in ('mine','store','assay'):
                 try: game.save(save_path);game.message=f'Saved to {save_path}'
                 except OSError as ex: game.message=f'Save failed: {ex}'
             if key==pygame.K_F9:
-                try: game=Game.load(save_path);game.message='Saved game loaded.'
+                try:
+                    game=Game.load(save_path)
+                    cart=WheelbarrowCargo()
+                    game.message='Saved game loaded.'
                 except (OSError,ValueError,KeyError,TypeError) as ex: game.message=f'Load failed: {ex}'
 
         if move_delay: move_delay-=1
@@ -199,6 +220,7 @@ def main(argv=None):
                     facing=dx
                 move_delay=4
         game.tick()
+        cart.update(game.miner)
         frame.fill((15,13,23))
         m=game.miner
         if game.state=='mine':
@@ -219,8 +241,8 @@ def main(argv=None):
             draw_town(frame, camera_x, camera_y, font)
             px=(m.x-camera_x)*TILE;py=HUD+(m.y-camera_y)*TILE
             draw_miner(frame, px, py)
-            if returning_with_wheelbarrow(m, facing):
-                draw_wheelbarrow(frame, px, py, facing, m.steps)
+            if cart.should_draw(m):
+                draw_wheelbarrow(frame, px, py, facing, m.steps, cart.cargo)
             if game.tnt_active:
                 x=(game.tnt_x-camera_x)*TILE+8;y=HUD+(game.tnt_y-camera_y)*TILE+7
                 if 0<=x<SW and HUD<=y<SH-MSG:
