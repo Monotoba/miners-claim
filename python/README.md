@@ -35,7 +35,17 @@ This Python version deliberately extends the original static hazard rules:
 - **Water** similarly threatens an adjacent miner after 35 updates (about 1.17 seconds). Falling into or moving directly into water or gas costs a life immediately, and the pocket remains hazardous.
 - Leaving the exposed area resets accumulated exposure. Hazards do **not yet simulate physically flowing water or expanding gas clouds**; these changes implement contact and leakage-zone danger without altering the save format. Current exposure warnings do not persist across loading a game.
 
-A miner carrying an unsold haul with an owned wheelbarrow is drawn **pushing a loaded, animated wheelbarrow** while walking along the surface toward the Assay Office. Walking away or traveling underground does not show the barrow.
+### Wheelbarrow cargo trips
+
+The wheelbarrow is now drawn on the surface whenever the miner owns it, including when empty. The **visible cargo** changes automatically:
+
+- Leaving the **Mercantile after purchasing supplies** shows food, provisions, or tool packages in the wheelbarrow. Leaving without buying anything shows an empty barrow.
+- Once the miner travels **underground**, the packages remain with the mine's supplies and are no longer drawn in the cart. This is visual staging; purchased items remain in the player's inventory and are not deleted.
+- Returning to the surface **with mined ore** loads ore into the wheelbarrow; nothing other than ore is shown being brought out of the mine.
+- Entering the **Assay Office** unloads the wheelbarrow. It remains visually empty afterward, whether the miner sells all or only part of the haul. Any unsold value remains available in the gameplay engine for subsequent Assay Office visits, rather than reappearing in the cart immediately.
+- A subsequent trip underground and back can fill the cart with ore again.
+
+Cart contents are **presentation-only, not a new inventory type**, and are not serialized into the save file. The movement, ore values, inventory, and purchasing/selling mechanics are unchanged. The wheelbarrow retains a small step-based wheel/cargo animation.
 
 
 Saves use a validated JSON format in `~/.local/share/miners-claim/miners_claim_python.json` (Windows uses the same path relative to the user's home). QB64 save V1/V2 import is supported; export back to QB64 is not yet provided.
