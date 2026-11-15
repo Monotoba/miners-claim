@@ -85,7 +85,9 @@ def draw_miner(surface, px, py, moving=False):
 
 def main(argv=None):
     parser=argparse.ArgumentParser(description="Miner's Claim (Python edition)")
-    parser.add_argument('--scale', choices=['auto', *map(str, range(1, 9))], default='auto',\n                        help='Initial window scale (auto or 1..8, default: auto)')\n    parser.add_argument('--fullscreen',action='store_true',help='Start in fullscreen mode')
+    parser.add_argument('--scale', choices=['auto', *map(str, range(1, 9))], default='auto',
+                        help='Initial window scale (auto or 1..8, default: auto)')
+    parser.add_argument('--fullscreen',action='store_true',help='Start in fullscreen mode')
     parser.add_argument('--seed',type=int,default=None)
     parser.add_argument('--load-qb64',type=Path,help='Import original QB64 V1/V2 save')
     args=parser.parse_args(argv)
