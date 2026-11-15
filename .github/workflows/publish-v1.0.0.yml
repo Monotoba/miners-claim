@@ -1,0 +1,59 @@
+name: Publish Miner's Claim v1.0.0
+
+# One-time release workflow; only changes to this file trigger it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-v1.0.0.yml
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Verify and publish v1.0.0
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.13'
+      - name: Install pygame and dependencies
+        run: python -m pip install -r python/requirements.txt
+      - name: Compile and execute regression suite
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+        run: |
+          python -m compileall -q python/miners_claim tests
+          python -m unittest discover -s tests -v
+      - name: Package tagged source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          git archive --format=zip --prefix=miners-claim-v1.0.0/ HEAD > dist/miners-claim-v1.0.0.zip
+          git archive --format=tar --prefix=miners-claim-v1.0.0/ HEAD | gzip -n > dist/miners-claim-v1.0.0.tar.gz
+          (cd dist && sha256sum miners-claim-v1.0.0.zip miners-claim-v1.0.0.tar.gz > SHA256SUMS)
+          (cd dist && sha256sum --check SHA256SUMS)
+      - name: Create v1.0.0 tag and GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v1.0.0 >/dev/null 2>&1; then
+            echo "Release v1.0.0 already exists; refusing to overwrite it."
+            exit 1
+          fi
+          gh release create v1.0.0 dist/miners-claim-v1.0.0.zip dist/miners-claim-v1.0.0.tar.gz dist/SHA256SUMS \
+            --target "$GITHUB_SHA" \
+            --title "Miner's Claim v1.0.0" \
+            --notes-file .github/RELEASE_NOTES_v1.0.0.md \
+            --latest
