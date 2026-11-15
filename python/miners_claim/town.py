@@ -190,16 +190,28 @@ def draw_bank(surface: pygame.Surface, font, large, miner,
     _write(surface,font,'C CLEAR     L LEAVE',59,151,GOLD)
 
 
-def draw_saloon(surface: pygame.Surface, font, large, miner):
-    """Saloon menu with one-water drinks and an even-odds high-card game."""
+def draw_saloon(surface: pygame.Surface, font, large, miner,
+                last_cards=None):
+    """Show drinks, high-card betting and the most recent two drawn cards."""
     surface.fill((24,17,20))
     pygame.draw.rect(surface,(92,51,44),(10,8,300,160))
     pygame.draw.rect(surface,(209,151,83),(10,8,300,160),2)
     pygame.draw.rect(surface,(56,30,30),(18,16,284,34))
     _center(surface,large,'FRONTIER SALOON',160,22,GOLD)
-    _center(surface,font,'DRINKS, CARDS AND CONVERSATION',160,42,PAPER)
-    _write(surface,font,f'YOUR CASH: ${miner.money}',36,63,GOLD)
-    _write(surface,font,'D  BUY DRINK   ${5}  (WATER +1)',27,84)
-    _write(surface,font,'P  PLAY HIGH CARD   ${10} BET',27,104)
-    _write(surface,font,'HIGHER CARD WINS ${10}; TIE: NO CHANGE',26,124)
-    _write(surface,font,'L  RETURN TO TOWN',67,151,GOLD)
+    _center(surface,font,'DRINKS AND HIGH-CARD TABLE',160,42,PAPER)
+    _write(surface,font,f'YOUR CASH: ${miner.money}',36,61,GOLD)
+    _write(surface,font,'D  BUY DRINK   ${5} (WATER +1)',27,79)
+    _write(surface,font,'P  DRAW HIGH CARD ($10 BET)',27,95)
+    _write(surface,font,'YOU',117,110,GOLD)
+    _write(surface,font,'HOUSE',178,110,GOLD)
+    for px, number in ((107,last_cards[0] if last_cards else None),
+                       (174,last_cards[1] if last_cards else None)):
+        pygame.draw.rect(surface,(245,232,209),(px,118,40,28))
+        pygame.draw.rect(surface,(65,45,42),(px,118,40,28),1)
+        label = '?' if number is None else (
+            'A' if number == 1 else
+            'J' if number == 11 else
+            'Q' if number == 12 else
+            'K' if number == 13 else str(number))
+        _center(surface,font,label,px+20,128,(58,34,34))
+    _write(surface,font,'L  RETURN TO TOWN',67,152,GOLD)
