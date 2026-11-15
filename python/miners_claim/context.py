@@ -54,3 +54,51 @@ def legend(game) -> str:
         if t in near:
             return f'NEAR: {ITEM_LABELS[t]}  |  J=JUMP L=LADDER'
     return 'ORE: GOLD $20 SILVER $12 GEM $45  |  P=PICKUP'
+
+class WheelbarrowCargo:
+    """Transient visual load for the round trip between town and the mine.
+
+    Purchases stay in the player's inventory; only their *visual* packages
+    are represented in the cart. Mining tools are not magically hauled
+    out of the mine. Sales unload the barrow even for a partial sale, with
+    unsold haul still held by the gameplay engine for subsequent selling.
+    """
+
+    def __init__(self):
+        self.cargo = 'empty'
+        self.purchases = 0
+        self.was_underground = False
+
+    def purchased(self, successful: bool) -> None:
+        if successful:
+            self.purchases += 1
+
+    def left_mercantile(self, miner) -> None:
+        self.cargo = ('supplies' if miner.wheelbarrow and self.purchases
+                      else 'empty')
+        self.purchases = 0
+        self.was_underground = False
+
+    def entered_assay(self) -> None:
+        # Depositing the ore is separate from selling it; a partial sale
+        # does not put the remaining material back into the wheelbarrow.
+        self.cargo = 'empty'
+        self.was_underground = False
+
+    def update(self, miner) -> None:
+        if not miner.wheelbarrow:
+            self.cargo = 'empty'
+            self.was_underground = False
+        elif miner.y > 2:
+            # Supplies stay in the mine, and newly dug ore is loaded on
+            # the way out rather than sharing the cart with tools.
+            self.cargo = 'empty'
+            self.was_underground = True
+        elif self.was_underground:
+            self.cargo = 'ore' if miner.haul > 0 else 'empty'
+            self.was_underground = False
+        elif self.cargo == 'ore' and miner.haul <= 0:
+            self.cargo = 'empty'
+
+    def should_draw(self, miner) -> bool:
+        return bool(miner.wheelbarrow and miner.y <= 2)
