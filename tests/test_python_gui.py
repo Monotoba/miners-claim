@@ -41,5 +41,31 @@ class PygameSmokeTests(unittest.TestCase):
             pygame.quit()
 
 
+
+    def test_bitmap_digits_and_loaded_cart_render(self):
+        try:
+            import pygame
+        except ImportError:
+            self.skipTest('pygame-ce not installed in this environment')
+        os.environ.setdefault('SDL_VIDEODRIVER', 'dummy')
+        os.environ.setdefault('SDL_AUDIODRIVER', 'dummy')
+        from miners_claim.bitmapfont import PixelFont
+        from miners_claim.app import draw_wheelbarrow
+        pygame.init()
+        try:
+            font = PixelFont()
+            label = font.render('$0123456789', False, (250, 240, 210))
+            self.assertEqual(label.get_size(), (11 * 6, 8))
+            self.assertTrue(label.get_bounding_rect().width > 0)
+            canvas = pygame.Surface((80, 48), pygame.SRCALPHA)
+            draw_wheelbarrow(canvas, 30, 20, -1, 4)
+            self.assertTrue(canvas.get_bounding_rect().width > 0)
+            canvas.fill((0, 0, 0, 0))
+            draw_wheelbarrow(canvas, 30, 20, 1, 5)
+            self.assertTrue(canvas.get_bounding_rect().width > 0)
+        finally:
+            pygame.quit()
+
+
 if __name__ == '__main__':
     unittest.main()
