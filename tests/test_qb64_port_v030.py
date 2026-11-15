@@ -29,7 +29,7 @@ class QB64PortStaticTests(unittest.TestCase):
         self.assertIn('CONST SCRH = 200', TEXT)
         self.assertIn('CONST SCREEN_SCALE = 5', TEXT)
         self.assertIn('CONST WINH = SCRH * SCREEN_SCALE', TEXT)
-        self.assertIn('CONST MSGH = 16', TEXT)
+        self.assertIn('CONST MSGH = 32', TEXT)
         self.assertIn('SUB PresentFrame', TEXT)
         self.assertIn('_PUTIMAGE (0, 0)-(WINW - 1, WINH - 1)', TEXT)
 
