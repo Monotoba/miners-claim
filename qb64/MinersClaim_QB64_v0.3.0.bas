@@ -36,10 +36,12 @@ CONST SCRH = 200
 ' Practical values:
 '   3 = 960x600
 '   4 = 1280x800
-'   5 = 1600x1000
-'   6 = 1920x1200
+'   5 = 1600x1000 (default, leaves room for window decorations)
+'   6 = 1920x1200 (can clip the bottom on 1200p desktops)
 '   8 = 2560x1600
-CONST SCREEN_SCALE = 6
+' Keep the 320x200 logical game image unchanged. A 1920x1200
+' window plus Linux title bar/panels may not fit on a 1200p desktop.
+CONST SCREEN_SCALE = 5
 CONST WIN_GOAL = 1000000
 CONST MAX_SCORES = 10
 CONST SAVE_FILE = "miners_claim_qb64_v030_save.txt"
