@@ -5,10 +5,12 @@ from pathlib import Path
 import pygame
 from .display import choose_scale, viewport
 from .town import draw_town, draw_store, draw_assay
+from .bitmapfont import PixelFont
+from .context import legend, returning_with_wheelbarrow
 from .engine import (Game, WIDTH, HEIGHT, TILE, AIR, GRASS, DIRT1, DIRT2, DIRT3,
                      ROCK, GOLD, SILVER, GEM, WATER, GAS, SAND, SNAKE, LADDER, BEDROCK, PRICES)
 
-SW, SH, HUD, MSG, SCALE, FPS = 320, 200, 24, 16, 3, 30
+SW, SH, HUD, MSG, SCALE, FPS = 320, 200, 24, 32, 3, 30
 COLORS = {
     AIR:(15,13,23), GRASS:(70,120,38), DIRT1:(104,71,43),
     DIRT2:(88,59,42), DIRT3:(77,49,48), ROCK:(79,83,92),
@@ -84,6 +86,29 @@ def draw_miner(surface, px, py, moving=False):
     pygame.draw.rect(surface,(42,37,36),(px+11,py+6,1,1))
 
 
+def draw_wheelbarrow(surface, px, py, facing, steps):
+    """Animate a loaded barrow in front of a miner walking toward ASSAY."""
+    direction = -1 if facing < 0 else 1
+    cx = px - 10 if direction < 0 else px + 26
+    wobble = steps % 2
+    wheel_x, wheel_y = cx + direction * 4, py + 14
+    pygame.draw.circle(surface, (33, 36, 43), (wheel_x, wheel_y), 4)
+    pygame.draw.circle(surface, (191, 181, 155), (wheel_x, wheel_y), 2)
+    pygame.draw.line(surface, (232, 223, 190), (wheel_x-2, wheel_y),
+                     (wheel_x+2, wheel_y), 1)
+    tray = pygame.Rect(cx-7, py+6-wobble, 14, 6)
+    pygame.draw.polygon(surface, (107, 110, 116), (
+        tray.topleft, tray.topright, (tray.right-3, tray.bottom),
+        (tray.left+3, tray.bottom)))
+    pygame.draw.line(surface, (209, 200, 177), tray.topleft, tray.topright)
+    for ox, oy in ((-4,5),(0,3),(4,5)):
+        pygame.draw.circle(surface, (220, 185, 51), (cx+ox,py+oy-wobble), 2)
+    pygame.draw.line(surface, (113, 76, 44), (cx,py+8),
+                     (px+8+direction*5,py+9), 2)
+    pygame.draw.line(surface, (248, 197, 143), (px+8,py+8),
+                     (px+8+direction*5,py+9), 2)
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description="Miner's Claim (Python edition)")
     parser.add_argument('--scale', choices=['auto', *map(str, range(1, 9))], default='auto',
@@ -101,13 +126,14 @@ def main(argv=None):
     surface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN) if fullscreen else pygame.display.set_mode(window_size, pygame.RESIZABLE)
     pygame.display.set_caption("Miner's Claim — Python Edition | F11 Fullscreen")
     frame=pygame.Surface((SW,SH))
-    font=pygame.font.Font(None,14)
-    large=pygame.font.Font(None,20)
+    font=PixelFont(scale=1)
+    large=PixelFont(scale=2)
     clock=pygame.time.Clock()
     save_path=Path.home()/'.local'/'share'/'miners-claim'/SAVE_NAME
     game=Game.import_qb64(args.load_qb64) if args.load_qb64 else Game(seed=args.seed)
     sale_input='';name_input='';scores=[];move_delay=0
     camera_x=camera_y=0
+    facing=-1
     running=True
     while running:
         for event in pygame.event.get():
@@ -168,7 +194,9 @@ def main(argv=None):
             dx= -1 if keys[pygame.K_LEFT] else 1 if keys[pygame.K_RIGHT] else 0
             dy= -1 if keys[pygame.K_UP] else 1 if keys[pygame.K_DOWN] else 0
             if dx or dy:
-                game.try_move(dx,0) if dx else game.try_move(0,dy)
+                moved=game.try_move(dx,0) if dx else game.try_move(0,dy)
+                if moved and dx:
+                    facing=dx
                 move_delay=4
         game.tick()
         frame.fill((15,13,23))
@@ -176,8 +204,8 @@ def main(argv=None):
         if game.state=='mine':
             # Fixed-size logical viewport, draw only visible tiles.
             camera_x=max(0,min(WIDTH-20,m.x-10))
-            camera_y=max(0,min(HEIGHT-10,m.y-5))
-            for sy in range(10):
+            camera_y=max(0,min(HEIGHT-9,m.y-4))
+            for sy in range(9):
                 y=sy+camera_y
                 for sx in range(20):
                     x=sx+camera_x;t=game.world[y][x]
@@ -191,6 +219,8 @@ def main(argv=None):
             draw_town(frame, camera_x, camera_y, font)
             px=(m.x-camera_x)*TILE;py=HUD+(m.y-camera_y)*TILE
             draw_miner(frame, px, py)
+            if returning_with_wheelbarrow(m, facing):
+                draw_wheelbarrow(frame, px, py, facing, m.steps)
             if game.tnt_active:
                 x=(game.tnt_x-camera_x)*TILE+8;y=HUD+(game.tnt_y-camera_y)*TILE+7
                 if 0<=x<SW and HUD<=y<SH-MSG:
@@ -198,13 +228,6 @@ def main(argv=None):
             pygame.draw.rect(frame,(42,35,25),(0,0,SW,HUD))
             draw_text(frame,font,f'${m.money}  HAUL ${m.haul}/{game.capacity}  LIFE {m.lives}  DEPTH {game.depth_feet}ft',3,2)
             draw_text(frame,font,f'F{m.food} W{m.water} L{m.ladders} TNT{m.tnt}  Tools:{"S" if m.shovel else "-"}{"P" if m.pickaxe else "-"}{"Lan" if m.lantern else ""}',3,13)
-            if m.y <= 6:
-                if game.near_store() and game.near_assay():
-                    draw_text(frame,font,'M: MERCANTILE   S: ASSAY OFFICE', 84, HUD+144, (250,218,148))
-                elif game.near_store():
-                    draw_text(frame,font,'M: ENTER MERCANTILE', 100, HUD+144, (250,218,148))
-                elif game.near_assay():
-                    draw_text(frame,font,'S: ENTER ASSAY OFFICE', 94, HUD+144, (250,218,148))
         elif game.state=='store':
             draw_store(frame, font, large, m, PRICES)
         elif game.state=='assay':
@@ -213,8 +236,11 @@ def main(argv=None):
             draw_text(frame,large,'YOU WON!' if game.state=='winner' else 'GAME OVER',95,35,(236,185,80))
             draw_text(frame,font,f'Score: ${game.final_score}   Depth: {game.final_depth}ft',47,80)
             draw_text(frame,font,f'Name: {name_input}_  (Enter to continue)',35,113)
+        # Two persistent, context-sensitive footer lines, never over mine tiles.
         pygame.draw.rect(frame,(40,35,30),(0,SH-MSG,SW,MSG))
-        draw_text(frame,font,game.message[:55],4,SH-12,(232,223,180))
+        pygame.draw.line(frame,(141,111,70),(0,SH-MSG),(SW,SH-MSG))
+        draw_text(frame,font,legend(game)[:52],4,SH-MSG+4,(230,208,137))
+        draw_text(frame,font,game.message[:52],4,SH-12,(232,223,180))
         # Query the current framebuffer each frame: window resizes can replace it.
         surface = pygame.display.get_surface()
         surface.fill((8, 9, 16))
