@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+# Keep write privileges isolated to the release job.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+jobs:
+  tests:
+    name: Static checks (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.10', '3.13']
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Check Python test syntax
+        run: python -m compileall -q tests
+      - name: Verify archived sources and specification
+        run: python -m unittest discover -s tests -v
+
+  source-release:
+    name: Publish versioned source archives
+    # No executable artifacts exist yet. Releases contain sources only.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout tagged sources
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Create source archives and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME}"
+          BASE="miners-claim-${VERSION}"
+          mkdir -p dist
+          git archive --format=zip --prefix="${BASE}/" HEAD > "dist/${BASE}.zip"
+          git archive --format=tar --prefix="${BASE}/" HEAD | gzip -n > "dist/${BASE}.tar.gz"
+          (cd dist && sha256sum "${BASE}.zip" "${BASE}.tar.gz" > SHA256SUMS)
+          (cd dist && sha256sum --check SHA256SUMS)
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" \
+            dist/*.zip dist/*.tar.gz dist/SHA256SUMS \
+            --verify-tag \
+            --title "Miner's Claim ${GITHUB_REF_NAME} (Source)" \
+            --notes "Source-only release. CI checks archived QB64 source integrity and specification constants; no compiled games or runtime compatibility certifications are included. Copyright (c) 2026 Randall L. Morgan. See LICENSE for noncommercial share-alike terms."
