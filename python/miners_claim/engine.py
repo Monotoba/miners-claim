@@ -52,6 +52,8 @@ class Game:
         self.town_layout = 'frontier'
         self.bank_balance = 0
         self.last_cards = None
+        self.encounter_kind = None
+        self.encounter_cooldown = 0
         self.message = 'WEST: stores, bank, assay and saloon. EAST: the mine shaft.'
         self.tnt_active = False
         self.tnt_x = self.tnt_y = self.tnt_frames = 0
@@ -260,6 +262,8 @@ class Game:
     def lose_life(self, why: str):
         m=self.miner
         m.lives -= 1; m.haul=0
+        self.encounter_kind = None
+        self.encounter_cooldown = 0
         self.hazard_kind = None
         self.hazard_exposure = self.hazard_limit = 0
         if m.lives <= 0: self._end_run(why+' No lives remain.')
@@ -280,6 +284,7 @@ class Game:
 
     def _move(self,x,y):
         m=self.miner
+        previous_x = m.x
         m.x=x; m.y=y; m.steps += 1; m.deepest=max(m.deepest,y)
         if y > SURFACE:
             if m.steps % 60 == 0:
@@ -288,6 +293,59 @@ class Game:
             if m.steps % 100 == 0:
                 if m.food: m.food-=1
                 else: self.lose_life('You ran out of food underground.')
+        if self.state == 'mine' and y <= SURFACE and x != previous_x:
+            self._check_street_encounter()
+
+    def _check_street_encounter(self):
+        """Random encounters only on horizontal surface walking steps.
+
+        The bandit's per-step chance grows toward the eastern mine.
+        No encounter is possible underground, inside buildings, or
+        during the post-encounter cooldown. Older maps stay unchanged.
+        """
+        if self.state != 'mine' or self.town_layout != 'frontier':
+            return False
+        m = self.miner
+        if m.y > SURFACE or not 0 <= m.x <= SHAFT:
+            return False
+        if self.encounter_cooldown > 0:
+            self.encounter_cooldown -= 1
+            return False
+
+        # Risk per eligible surface step: 0.3% at the western edge,
+        # climbing quadratically to 2.3% by the eastern mine shaft.
+        fraction = m.x / SHAFT
+        bandit_chance = 0.003 + 0.020 * fraction * fraction
+        if (m.haul > 0 or m.money > 300) and self.rng.random() < bandit_chance:
+            targets = (['ore'] if m.haul > 0 else []) + (
+                ['cash'] if m.money > 300 else [])
+            stolen = targets[0] if len(targets) == 1 else (
+                targets[0] if self.rng.random() < 0.5 else targets[1])
+            amount = m.haul if stolen == 'ore' else m.money
+            if stolen == 'ore':
+                m.haul = 0
+            else:
+                m.money = 0
+            self.state = 'encounter'
+            self.encounter_kind = 'bandit'
+            self.encounter_cooldown = 24
+            self.message = f'BANDIT! Stole all your {stolen}: ${amount}!'
+            return True
+
+        if m.money >= 300 and self.rng.random() < 0.012:
+            self.state = 'encounter'
+            self.encounter_kind = 'banker'
+            self.encounter_cooldown = 24
+            self.message = 'BANKER: Carrying ${300}+? Deposit cash at the BANK!'
+            return True
+        return False
+
+    def dismiss_encounter(self) -> bool:
+        if self.state != 'encounter':
+            return False
+        self.encounter_kind = None
+        self.state = 'mine'
+        return True
 
     def try_move(self,dx:int,dy:int) -> bool:
         if self.state != 'mine': return False
@@ -482,6 +540,8 @@ class Game:
         obj.jump_grace=int(data['jump_grace'])
         obj.message='Saved game loaded.';obj.final_score=obj.final_depth=0
         obj.last_cards = None
+        obj.encounter_kind = None
+        obj.encounter_cooldown = 0
         obj.hazard_kind=None;obj.hazard_exposure=obj.hazard_limit=0
         return obj
 
@@ -531,5 +591,7 @@ class Game:
         obj.town_layout='legacy';obj.bank_balance=0
         obj.message='Imported QB64 save.';obj.final_score=obj.final_depth=0
         obj.last_cards = None
+        obj.encounter_kind = None
+        obj.encounter_cooldown = 0
         obj.hazard_kind=None;obj.hazard_exposure=obj.hazard_limit=0
         return cls.from_dict(obj.to_dict())
