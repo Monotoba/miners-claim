@@ -55,7 +55,15 @@ class ContextTests(unittest.TestCase):
         self.assertIn('SELL', legend(self.game))
         self.game.state = 'mine'
         self.game.miner.y = 1
+        self.assertIn('WEST:', legend(self.game))
+        self.assertIn('B BANK', legend(self.game))
+        self.game.town_layout = 'legacy'
         self.assertIn('M=MERCANTILE', legend(self.game))
+        self.game.town_layout = 'frontier'
+        self.game.state = 'bank'
+        self.assertIn('WITHDRAW', legend(self.game))
+        self.game.state = 'saloon'
+        self.assertIn('HIGH CARD', legend(self.game))
 
     def test_loaded_wheelbarrow_only_when_returning(self):
         m = self.game.miner
