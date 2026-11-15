@@ -1,6 +1,6 @@
 # Miner's Claim
 
-[![CI](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml)
+[![CI](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml/badge.svg?branch=main&event=push&v=1.0.0)](https://github.com/Monotoba/miners-claim/actions/workflows/ci.yml)
 [![License: MC-NSAL 1.0](https://img.shields.io/badge/license-MC--NSAL%201.0-blue)](LICENSE)
 ![Project status: QB64 archival baseline](https://img.shields.io/badge/status-Python%20alpha-orange)
 [![Latest release](https://img.shields.io/github/v/release/Monotoba/miners-claim?display_name=tag&label=release)](https://github.com/Monotoba/miners-claim/releases)
