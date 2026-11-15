@@ -69,10 +69,10 @@ class StreetEncounterTests(unittest.TestCase):
         self.game.miner.haul = 20
         self.game.miner.money = 0
         self.game.miner.x = 0
-        with patch.object(self.game.rng, 'random', return_value=.01):
+        with patch.object(self.game.rng, 'random', return_value=.0002):
             self.assertFalse(self.game._check_street_encounter())
         self.game.miner.x = SHAFT
-        with patch.object(self.game.rng, 'random', return_value=.01):
+        with patch.object(self.game.rng, 'random', return_value=.0002):
             self.assertTrue(self.game._check_street_encounter())
         self.assertEqual(self.game.encounter_kind, 'bandit')
 
