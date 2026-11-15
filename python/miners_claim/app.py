@@ -283,7 +283,7 @@ def main(argv=None):
         elif game.state=='bank':
             draw_bank(frame, font, large, m, game.bank_balance, bank_input)
         elif game.state=='saloon':
-            draw_saloon(frame, font, large, m)
+            draw_saloon(frame, font, large, m, game.last_cards)
         else:
             draw_text(frame,large,'YOU WON!' if game.state=='winner' else 'GAME OVER',95,35,(236,185,80))
             draw_text(frame,font,f'Score: ${game.final_score}   Depth: {game.final_depth}ft',47,80)
