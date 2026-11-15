@@ -20,6 +20,16 @@ These are separate historical files, not a verified sequential Git development h
 
 Install a compatible QB64 implementation and open `original-qb64/MinersClaim_QB64_v29_simple_tnt_timer.bas`. Compile and run within QB64. The source describes controls and includes no required external art or sound files.
 
+## Game design specification
+
+The [QB64 v29 gameplay baseline](specifications/GAME_DESIGN_V1.md) documents implemented mechanics, values, persistence formats, porting requirements, and outstanding ambiguities. Its source-derived static checks can be run with:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+Static tests do not validate QB64 runtime execution or CoCo hardware compatibility.
+
 ## Roadmap
 
 1. Establish versioned gameplay specifications and test scenarios.
