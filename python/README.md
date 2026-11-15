@@ -12,7 +12,11 @@ python -m pip install -r requirements.txt
 python -m miners_claim
 ```
 
-The default is **automatic integer zoom** chosen to fit the current desktop. The game window is **resizable**, with centered letterboxing so the original 320×200 proportions are maintained. Press **F11** to toggle fullscreen. You can specify a fixed starting scale using `--scale 1` through `--scale 8`, or start fullscreen using `--fullscreen`.\n\nOptional: `python -m miners_claim --scale 4 --seed 12345`, or import an original QB64 save with `--load-qb64 /path/to/miners_claim_save.txt`. Display layout is calculated from the SDL-reported desktop dimensions; OS-specific high-DPI scaling can vary, especially on fractional-scaling setups.
+The UI uses a bundled, original 5×7 pixel font for clear numerals, currency symbols, and labels at integer display scales.
+
+The default is **automatic integer zoom** chosen to fit the current desktop. The game window is **resizable**, with centered letterboxing so the original 320×200 proportions are maintained. Press **F11** to toggle fullscreen. You can specify a fixed starting scale using `--scale 1` through `--scale 8`, or start fullscreen using `--fullscreen`.
+
+Optional: `python -m miners_claim --scale 4 --seed 12345`, or import an original QB64 save with `--load-qb64 /path/to/miners_claim_save.txt`. Display layout is calculated from the SDL-reported desktop dimensions; OS-specific high-DPI scaling can vary, especially on fractional-scaling setups.
 
 ## Controls
 
@@ -20,6 +24,19 @@ The default is **automatic integer zoom** chosen to fit the current desktop. The
 - Mine: **arrow keys** move or dig, **J** jump, **L** place ladder, **M** enter the **Mercantile** (near x=0–12, y≤6), **S** enter the **Assay Office** (near x=10–25, y≤6), **T** drop TNT, **P** collect blasted ore. Surface storefronts and context prompts indicate the shops. The interaction zones intentionally overlap at x=10–12 as they did in the original game.
 - Assay: enter a numeric value and press **Enter** to sell, **A** to sell everything, **C** clear, **L** or **Esc** leave. The screen shows cash and unsold haul.
 - **F5** save, **F9** load. **Esc** quits the current run or returns from assay.
+
+## Context legend and active hazards
+
+The bottom of the screen now has **two separate lines**: a contextual legend identifying nearby ore, equipment controls, or hazards, and the current gameplay message. The mine viewport is nine tiles tall rather than ten to reserve space for the footer; original world coordinates and saving are unchanged.
+
+This Python version deliberately extends the original static hazard rules:
+
+- **Gas** is toxic when the miner is in an open cell directly adjacent to a gas pocket. A warning begins, and remaining there for 20 game updates (about 0.67 seconds at 30 FPS) costs a life.
+- **Water** similarly threatens an adjacent miner after 35 updates (about 1.17 seconds). Falling into or moving directly into water or gas costs a life immediately, and the pocket remains hazardous.
+- Leaving the exposed area resets accumulated exposure. Hazards do **not yet simulate physically flowing water or expanding gas clouds**; these changes implement contact and leakage-zone danger without altering the save format. Current exposure warnings do not persist across loading a game.
+
+A miner carrying an unsold haul with an owned wheelbarrow is drawn **pushing a loaded, animated wheelbarrow** while walking along the surface toward the Assay Office. Walking away or traveling underground does not show the barrow.
+
 
 Saves use a validated JSON format in `~/.local/share/miners-claim/miners_claim_python.json` (Windows uses the same path relative to the user's home). QB64 save V1/V2 import is supported; export back to QB64 is not yet provided.
 
@@ -29,7 +46,7 @@ Saves use a validated JSON format in `~/.local/share/miners-claim/miners_claim_p
 - Graphics now include surface Mercantile and Assay Office buildings, redesigned trading interiors, procedural pixel-art textures, and a more detailed miner, without external image assets. Town buildings are visual overlays on the original world (no terrain/save-file changes). Artwork is still provisional; no sound effects yet.
 - High scores are currently held only for the running session (no persistent score file).
 - The original screen art and some menu messages are not reproduced verbatim.
-- Rules are isolated and covered by headless tests. Window sizing and letterboxing have additional unit tests. Player testing has confirmed the initial game runs; the updated rendering still needs testing across desktop configurations.
+- Rules are isolated and covered by headless tests. Window sizing and letterboxing have additional unit tests. Player testing has confirmed the earlier game runs; the latest font, hazard and cart changes require additional desktop playtesting.
 - No Windows/Linux standalone executable packages or automated release builds yet.
 
 To test from repo root: `python -m unittest discover -s tests -v`. CI runs the engine, layout, archive-integrity, and headless pygame smoke tests on Linux and Windows.
