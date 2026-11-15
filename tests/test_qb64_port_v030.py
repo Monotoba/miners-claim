@@ -24,6 +24,15 @@ class QB64PortStaticTests(unittest.TestCase):
         self.assertEqual(len(sub_names), len(re.findall(r'(?m)^END SUB\s*$', TEXT)))
         self.assertEqual(len(function_names), len(re.findall(r'(?m)^END FUNCTION\s*$', TEXT)))
 
+    def test_default_window_fits_below_1200p_with_desktop_decorations(self):
+        self.assertIn('CONST SCRW = 320', TEXT)
+        self.assertIn('CONST SCRH = 200', TEXT)
+        self.assertIn('CONST SCREEN_SCALE = 5', TEXT)
+        self.assertIn('CONST WINH = SCRH * SCREEN_SCALE', TEXT)
+        self.assertIn('CONST MSGH = 16', TEXT)
+        self.assertIn('SUB PresentFrame', TEXT)
+        self.assertIn('_PUTIMAGE (0, 0)-(WINW - 1, WINH - 1)', TEXT)
+
     def test_frontier_and_legacy_geography(self):
         for item in ('CONST CLAIM_SHAFT_X = 72', 'CONST LEGACY_SHAFT_X = 28',
                      'DrawFrontierBuilding 1, 11', 'DrawFrontierBuilding 15, 9',
