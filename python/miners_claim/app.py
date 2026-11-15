@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import pygame
+from .display import choose_scale, viewport
 from .engine import (Game, WIDTH, HEIGHT, TILE, AIR, GRASS, DIRT1, DIRT2, DIRT3,
                      ROCK, GOLD, SILVER, GEM, WATER, GAS, SAND, SNAKE, LADDER, BEDROCK, PRICES)
 
@@ -21,15 +22,81 @@ def draw_text(surface, font, s, x, y, color=(230,230,215)):
     surface.blit(font.render(s, False, color), (x,y))
 
 
+def draw_terrain(surface, tile, px, py, x, y):
+    """Draw a textured tile using deterministic marks, without image assets."""
+    rect = pygame.Rect(px, py, TILE, TILE)
+    color = COLORS[tile]
+    pygame.draw.rect(surface, color, rect)
+    if tile == AIR:
+        return
+    shadow = tuple(max(0, c - 28) for c in color)
+    highlight = tuple(min(255, c + 22) for c in color)
+    if tile not in (LADDER, WATER, GAS, SNAKE):
+        pygame.draw.line(surface, highlight, (px, py), (px+14, py))
+        pygame.draw.line(surface, shadow, (px+15, py+1), (px+15, py+15))
+        pygame.draw.line(surface, shadow, (px, py+15), (px+15, py+15))
+    seed = (x * 137 + y * 271) & 0xFFFF
+    if tile in (DIRT1, DIRT2, DIRT3, ROCK, BEDROCK, SAND):
+        for i in range(3):
+            sx = px + 2 + ((seed + 7*i) % 12)
+            sy = py + 2 + ((seed//7 + 11*i) % 12)
+            pygame.draw.line(surface, highlight if i == 0 else shadow,
+                             (sx, sy), (sx + (2 if tile == ROCK else 1), sy))
+    if tile in (GOLD, SILVER, GEM):
+        for ox, oy, radius in ((5, 5, 3), (10, 10, 3), (12, 4, 2)):
+            pygame.draw.circle(surface, shadow, (px+ox+1,py+oy+1), radius)
+            pygame.draw.circle(surface, highlight, (px+ox,py+oy), radius)
+        if tile == GEM:
+            pygame.draw.line(surface,(235,255,255),(px+5,py+3),(px+9,py+8),1)
+    elif tile == GRASS:
+        pygame.draw.line(surface,(102,170,69),(px,py+2),(px+15,py+2),2)
+        for ox in (2,6,12):
+            pygame.draw.line(surface,(151,192,72),(px+ox,py+3),(px+ox-1,py-1),1)
+    elif tile == LADDER:
+        for ox in (4,12):
+            pygame.draw.line(surface,(95,58,28),(px+ox,py),(px+ox,py+15),2)
+        for oy in (3,8,13):
+            pygame.draw.line(surface,(245,187,95),(px+4,py+oy),(px+12,py+oy),2)
+    elif tile == WATER:
+        for oy in (4,10):
+            pygame.draw.line(surface,(96,183,250),(px+1,py+oy),(px+7,py+oy),1)
+            pygame.draw.line(surface,(69,142,229),(px+8,py+oy+2),(px+14,py+oy+2),1)
+    elif tile == GAS:
+        pygame.draw.circle(surface,(175,213,107),(px+7,py+7),5,1)
+        pygame.draw.circle(surface,(196,235,131),(px+11,py+4),2,1)
+    elif tile == SNAKE:
+        pygame.draw.arc(surface,(241,183,106),(px+2,py+3,12,10),0,5,2)
+        pygame.draw.circle(surface,(243,221,122),(px+11,py+5),2)
+        pygame.draw.circle(surface,(30,24,19),(px+12,py+4),1)
+
+
+def draw_miner(surface, px, py, moving=False):
+    """Retro miner silhouette with helmet, lamp, face, and overalls."""
+    pygame.draw.rect(surface,(42,41,51),(px+4,py+13,4,3))
+    pygame.draw.rect(surface,(42,41,51),(px+10,py+13,4,3))
+    pygame.draw.rect(surface,(55,115,179),(px+4,py+8,10,6))
+    pygame.draw.rect(surface,(244,196,146),(px+5,py+4,8,6))
+    pygame.draw.rect(surface,(117,75,34),(px+4,py+4,2,5))
+    pygame.draw.rect(surface,(249,204,57),(px+3,py+2,12,3))
+    pygame.draw.rect(surface,(200,148,29),(px+5,py,8,3))
+    pygame.draw.circle(surface,(255,251,183),(px+11,py+2),2)
+    pygame.draw.rect(surface,(42,37,36),(px+11,py+6,1,1))
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description="Miner's Claim (Python edition)")
-    parser.add_argument('--scale',type=int,choices=range(1,7),metavar='1..6',default=3)
+    parser.add_argument('--scale', choices=['auto', *map(str, range(1, 9))], default='auto',\n                        help='Initial window scale (auto or 1..8, default: auto)')\n    parser.add_argument('--fullscreen',action='store_true',help='Start in fullscreen mode')
     parser.add_argument('--seed',type=int,default=None)
     parser.add_argument('--load-qb64',type=Path,help='Import original QB64 V1/V2 save')
     args=parser.parse_args(argv)
     pygame.init()
-    surface=pygame.display.set_mode((SW*args.scale,SH*args.scale))
-    pygame.display.set_caption("Miner's Claim — Python Edition")
+    desktops = pygame.display.get_desktop_sizes()
+    desktop = desktops[0] if desktops else (1280, 800)
+    scale = choose_scale(desktop, (SW, SH)) if args.scale == 'auto' else int(args.scale)
+    window_size = (SW * scale, SH * scale)
+    fullscreen = args.fullscreen
+    surface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN) if fullscreen else pygame.display.set_mode(window_size, pygame.RESIZABLE)
+    pygame.display.set_caption("Miner's Claim — Python Edition | F11 Fullscreen")
     frame=pygame.Surface((SW,SH))
     font=pygame.font.Font(None,14)
     large=pygame.font.Font(None,20)
@@ -44,6 +111,15 @@ def main(argv=None):
             if event.type==pygame.QUIT: running=False; continue
             if event.type!=pygame.KEYDOWN: continue
             key=event.key
+            if key==pygame.K_F11:
+                if fullscreen:
+                    fullscreen = False
+                    surface = pygame.display.set_mode(window_size, pygame.RESIZABLE)
+                else:
+                    window_size = pygame.display.get_surface().get_size()
+                    fullscreen = True
+                    surface = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                continue
             if key==pygame.K_ESCAPE:
                 if game.state=='assay': game.state='mine'
                 elif game.state in ('mine','store'): game._end_run('You abandoned the claim.')
@@ -103,24 +179,12 @@ def main(argv=None):
                 for sx in range(20):
                     x=sx+camera_x;t=game.world[y][x]
                     px,py=sx*TILE,HUD+sy*TILE
-                    c=COLORS[t]
-                    pygame.draw.rect(frame,c,(px,py,TILE,TILE))
-                    if t in (DIRT1,DIRT2,DIRT3,ROCK,SAND):
-                        pygame.draw.circle(frame,tuple(max(0,v-20) for v in c),(px+((x*7+y*3)%13)+1,py+((x*3+y*11)%13)+1),2)
-                    if t==LADDER:
-                        pygame.draw.line(frame,(90,53,22),(px+4,py),(px+4,py+15),2)
-                        pygame.draw.line(frame,(90,53,22),(px+12,py),(px+12,py+15),2)
-                        for j in range(3,15,5):pygame.draw.line(frame,(235,185,90),(px+4,py+j),(px+12,py+j),2)
-                    elif t in (GOLD,SILVER,GEM):
-                        pygame.draw.circle(frame,(245,244,240),(px+8,py+7),3)
-                    elif t==WATER: pygame.draw.line(frame,(100,185,255),(px,py+7),(px+15,py+7),2)
-                    elif t==GAS: pygame.draw.circle(frame,(182,220,116),(px+8,py+8),5,1)
-                    elif t==SNAKE: pygame.draw.arc(frame,(240,195,105),(px+2,py+2,12,12),0,5,2)
-                    if game.loot[y][x]: pygame.draw.circle(frame,(252,232,130),(px+11,py+11),2)
+                    draw_terrain(frame, t, px, py, x, y)
+                    if game.loot[y][x]:
+                        pygame.draw.circle(frame,(252,232,130),(px+11,py+11),3)
+                        pygame.draw.circle(frame,(255,255,211),(px+10,py+10),1)
             px=(m.x-camera_x)*TILE;py=HUD+(m.y-camera_y)*TILE
-            pygame.draw.rect(frame,(238,210,145),(px+4,py+2,8,11))
-            pygame.draw.rect(frame,(65,133,203),(px+5,py+10,6,5))
-            pygame.draw.rect(frame,(245,212,49),(px+3,py,10,4))
+            draw_miner(frame, px, py)
             if game.tnt_active:
                 x=(game.tnt_x-camera_x)*TILE+8;y=HUD+(game.tnt_y-camera_y)*TILE+7
                 if 0<=x<SW and HUD<=y<SH-MSG:
@@ -144,8 +208,13 @@ def main(argv=None):
             draw_text(frame,font,f'Name: {name_input}_  (Enter to continue)',35,113)
         pygame.draw.rect(frame,(40,35,30),(0,SH-MSG,SW,MSG))
         draw_text(frame,font,game.message[:55],4,SH-12,(232,223,180))
-        scaled=pygame.transform.scale(frame,surface.get_size())
-        surface.blit(scaled,(0,0));pygame.display.flip()
+        # Query the current framebuffer each frame: window resizes can replace it.
+        surface = pygame.display.get_surface()
+        surface.fill((8, 9, 16))
+        vx, vy, vw, vh = viewport(surface.get_size(), (SW, SH))
+        scaled = pygame.transform.scale(frame, (vw, vh))
+        surface.blit(scaled, (vx, vy))
+        pygame.display.flip()
         clock.tick(FPS)
     pygame.quit()
 
