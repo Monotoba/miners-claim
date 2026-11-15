@@ -51,6 +51,7 @@ class Game:
         self.state = 'store'
         self.town_layout = 'frontier'
         self.bank_balance = 0
+        self.last_cards = None
         self.message = 'WEST: stores, bank, assay and saloon. EAST: the mine shaft.'
         self.tnt_active = False
         self.tnt_x = self.tnt_y = self.tnt_frames = 0
@@ -223,6 +224,8 @@ class Game:
         result = (player > dealer) - (player < dealer)
         delta = bet * result
         self.miner.money += delta
+        self.last_cards = (player, dealer, delta)
+        self._check_win()
         word = 'WON' if delta > 0 else 'LOST' if delta < 0 else 'TIE'
         self.message = f'Cards: you {player}, dealer {dealer}. {word} ${abs(delta)}.'
         return delta
@@ -399,7 +402,7 @@ class Game:
         self.message='TNT dropped! Ten seconds! Run!'; return True
 
     def tick(self):
-        if self.state in ('store','mine','assay') and self.tnt_active:
+        if self.state in ('store','mine','assay','bank','saloon') and self.tnt_active:
             self.tnt_frames-=1
             if self.tnt_frames<=0: self.explode()
         if self.state == 'mine':
@@ -478,6 +481,7 @@ class Game:
         if obj.state not in permitted: raise ValueError('Invalid state')
         obj.jump_grace=int(data['jump_grace'])
         obj.message='Saved game loaded.';obj.final_score=obj.final_depth=0
+        obj.last_cards = None
         obj.hazard_kind=None;obj.hazard_exposure=obj.hazard_limit=0
         return obj
 
@@ -526,5 +530,6 @@ class Game:
         obj.state='mine';obj.jump_grace=0
         obj.town_layout='legacy';obj.bank_balance=0
         obj.message='Imported QB64 save.';obj.final_score=obj.final_depth=0
+        obj.last_cards = None
         obj.hazard_kind=None;obj.hazard_exposure=obj.hazard_limit=0
         return cls.from_dict(obj.to_dict())
