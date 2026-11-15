@@ -14,7 +14,7 @@ class CoCoFeaturePriorityTests(unittest.TestCase):
         cls.text = FILE.read_text(encoding='utf-8')
 
     def test_every_priority_rank_is_present_exactly_once(self):
-        ranks = [int(n) for n in re.findall(r'^\\|\\s*(\\d+)\\s*\\|\\s*\\*\\*P[0-4]\\*\\*', self.text, flags=re.M)]
+        ranks = [int(n) for n in re.findall(r'^[|][ ]*([0-9]+)[ ]*[|][ ]*[*][*]P[0-4][*][*]', self.text, flags=re.M)]
         self.assertEqual(ranks, list(range(1, 41)))
 
     def test_core_not_removed_in_reduction_sequence(self):
