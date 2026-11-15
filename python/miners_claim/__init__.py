@@ -1,0 +1,1 @@
+"""Miner's Claim desktop port (noncommercial share-alike license)."""
