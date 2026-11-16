@@ -42,6 +42,10 @@ See [installation instructions, controls, and known limitations](python/README.m
 
 This is not yet a standalone executable release; install pygame-ce as described in `python/README.md`.
 
+## Microsoft QuickBASIC 4.5 / DOS source candidate
+
+A separate [QuickBASIC 4.5 DOS edition](qb45/README.md) is available at [`qb45/MINER45.BAS`](qb45/MINER45.BAS), targeting 16-bit Microsoft QuickBASIC 4.5 and VGA `SCREEN 13`. It retains the mining loop, full 128×96 world using compact byte strings, Mercantile, Assay, bank, saloon, TNT and road encounters, but simplifies desktop-only visuals. The DOS save format is independent of QB64 and Python. **Static checks pass; compilation in the actual Microsoft QuickBASIC 4.5 environment and gameplay are not yet verified.** The existing QB64 and Python releases are unaffected.
+
 ## QB64 v0.3.0 candidate
 
 The [QB64 edition source and controls](qb64/README.md) are a separately versioned port of the current Python gameplay to QB64-PE, derived from the preserved QB64 v29 source. The current candidate implements the expanded frontier town, bank/saloon, modern hazards, NPCs, wheelbarrow cargo and road encounters, with V3 saves and V1/V2 load fallback. Static tests are in [`tests/test_qb64_port_v030.py`](tests/test_qb64_port_v030.py), and compilation is checked independently in [`qb64-compile.yml`](.github/workflows/qb64-compile.yml). Until compiled and manually tested, this is **source-only candidate**, not a guaranteed playable executable.
