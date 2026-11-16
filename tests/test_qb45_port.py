@@ -63,6 +63,16 @@ class QuickBasic45SourceTests(unittest.TestCase):
             self.assertIn(term, bandit)
         self.assertIn('Cash + Bank >= TARGET', self.block('CheckWin'))
 
+    def test_dos_error_handler_lives_at_module_level(self):
+        # QB4.5 (and QB64) cannot use a SUB-local ON ERROR GOTO label.
+        prologue = self.text[:re.search(r'(?m)^SUB NewGame\b', self.text).start()]
+        self.assertIn('FileErrorHandler:', prologue)
+        self.assertIn('RESUME NEXT', prologue)
+        self.assertIn('ON ERROR GOTO FileErrorHandler', self.block('SaveMine'))
+        self.assertIn('ON ERROR GOTO FileErrorHandler', self.block('LoadMine'))
+        self.assertNotIn('SaveError:', self.text)
+        self.assertNotIn('LoadError:', self.text)
+
     def test_dos_save_format_and_legacy_isolation(self):
         save = self.block('SaveMine')
         load = self.block('LoadMine')
