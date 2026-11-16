@@ -1,11 +1,13 @@
-name: QB64 v0.3.0 compile check
+name: QB64 compile and QB4.5 syntax smoke check
 
 on:
   push:
     branches: [main]
     paths:
       - qb64/**
+      - qb45/**
       - tests/test_qb64_port_v030.py
+      - tests/test_qb45_port.py
       - .github/workflows/qb64-compile.yml
   workflow_dispatch:
 
@@ -23,7 +25,9 @@ jobs:
         with:
           python-version: '3.13'
       - name: Static port invariants
-        run: python -m unittest discover -s tests -p test_qb64_port_v030.py -v
+        run: |
+          python -m unittest discover -s tests -p test_qb64_port_v030.py -v
+          python -m unittest discover -s tests -p test_qb45_port.py -v
       - name: Install QB64PE build requirements
         run: |
           sudo apt-get update
@@ -54,6 +58,16 @@ jobs:
           test -x ./qb64pe
           ./qb64pe -x "$GITHUB_WORKSPACE/qb64/MinersClaim_QB64_v0.3.0.bas" -o "$GITHUB_WORKSPACE/miners-claim-qb64-v0.3.0"
           test -s "$GITHUB_WORKSPACE/miners-claim-qb64-v0.3.0"
+      - name: Smoke-compile QB4.5 source using QB64-PE BASIC parser
+        shell: bash
+        run: |
+          set -euo pipefail
+          qb64="$(find /tmp/qb64pe-extract -name qb64pe -type f -executable -print -quit)"
+          test -n "$qb64"
+          cd "$(dirname "$qb64")"
+          ./qb64pe -x "$GITHUB_WORKSPACE/qb45/MINER45.BAS" -o "$RUNNER_TEMP/miner45-compat"
+          test -s "$RUNNER_TEMP/miner45-compat"
+          echo "QB64 syntax smoke check succeeded; this is NOT a Microsoft QB4.5 compilation."
       - name: Preserve tested Linux executable
         uses: actions/upload-artifact@v4
         with:
