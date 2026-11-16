@@ -681,19 +681,19 @@ SUB SaveMine
     WRITE #1, Ladders, Shovel, Pickaxe, Cart, Lantern, TNT
     WRITE #1, Haul, Steps, Deepest
     FOR yy = 0 TO MH - 1
-        hex$ = ""
+        rowHex$ = ""
         FOR xx = 0 TO MW - 1
             value = TileAt%(xx, yy)
-            hex$ = hex$ + MID$("0123456789ABCDEF", value + 1, 1)
+            rowHex$ = rowHex$ + MID$("0123456789ABCDEF", value + 1, 1)
         NEXT xx
-        PRINT #1, hex$
+        PRINT #1, rowHex$
     NEXT yy
     FOR yy = 0 TO MH - 1
-        hex$ = ""
+        rowHex$ = ""
         FOR xx = 0 TO MW - 1
-            hex$ = hex$ + HexByte$(LootAt%(xx, yy))
+            rowHex$ = rowHex$ + HexByte$(LootAt%(xx, yy))
         NEXT xx
-        PRINT #1, hex$
+        PRINT #1, rowHex$
     NEXT yy
     CLOSE #1
     ON ERROR GOTO 0
@@ -721,10 +721,10 @@ SUB LoadMine
     INPUT #1, Ladders, Shovel, Pickaxe, Cart, Lantern, TNT
     INPUT #1, Haul, Steps, Deepest
     FOR yy = 0 TO MH - 1
-        LINE INPUT #1, hex$
-        IF LEN(hex$) <> MW THEN CLOSE #1: Message$ = "BAD MAP RECORD.": EXIT SUB
+        LINE INPUT #1, rowHex$
+        IF LEN(rowHex$) <> MW THEN CLOSE #1: Message$ = "BAD MAP RECORD.": EXIT SUB
         FOR xx = 0 TO MW - 1
-            value = FromHex%(MID$(hex$, xx + 1, 1))
+            value = FromHex%(MID$(rowHex$, xx + 1, 1))
             IF value < 0 OR value > BEDROCK THEN
                 CLOSE #1: Message$ = "BAD MAP TILE.": EXIT SUB
             END IF
@@ -732,11 +732,11 @@ SUB LoadMine
         NEXT xx
     NEXT yy
     FOR yy = 0 TO MH - 1
-        LINE INPUT #1, hex$
-        IF LEN(hex$) <> MW * 2 THEN CLOSE #1: Message$ = "BAD LOOT ROW.": EXIT SUB
+        LINE INPUT #1, rowHex$
+        IF LEN(rowHex$) <> MW * 2 THEN CLOSE #1: Message$ = "BAD LOOT ROW.": EXIT SUB
         FOR xx = 0 TO MW - 1
-            hi = FromHex%(MID$(hex$, xx * 2 + 1, 1))
-            lo = FromHex%(MID$(hex$, xx * 2 + 2, 1))
+            hi = FromHex%(MID$(rowHex$, xx * 2 + 1, 1))
+            lo = FromHex%(MID$(rowHex$, xx * 2 + 2, 1))
             IF hi < 0 OR lo < 0 THEN CLOSE #1: Message$ = "BAD LOOT VALUE.": EXIT SUB
             PutLoot xx, yy, hi * 16 + lo
         NEXT xx
