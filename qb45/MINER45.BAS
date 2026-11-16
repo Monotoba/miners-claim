@@ -86,7 +86,7 @@ DIM SHARED BankEntry$, SaleEntry$, Message$, Alert$
 DIM SHARED PauseSteps, EncounterType, CardMe, CardHouse
 DIM SHARED BlastOn, BlastX, BlastY, BlastAt!
 DIM SHARED HazardType, HazardStart!, LastFall!
-DIM SHARED NeedsDraw, StopGame
+DIM SHARED NeedsDraw, StopGame, FileErrorFlag
 DIM SHARED Filename$
 
 RANDOMIZE TIMER
@@ -116,6 +116,12 @@ LOOP
 SCREEN 0
 WIDTH 80
 END
+
+' QuickBASIC 4.5 requires ON ERROR handler labels at module level.
+' The handler resumes the failed IO statement, leaving an error flag.
+FileErrorHandler:
+    FileErrorFlag = -1
+    RESUME NEXT
 
 SUB NewGame
     GenerateMine
@@ -674,8 +680,14 @@ FUNCTION FromHex% (c$)
 END FUNCTION
 
 SUB SaveMine
-    ON ERROR GOTO SaveError
+    FileErrorFlag = 0
+    ON ERROR GOTO FileErrorHandler
     OPEN Filename$ FOR OUTPUT AS #1
+    IF FileErrorFlag <> 0 THEN
+        ON ERROR GOTO 0
+        Message$ = "CANNOT CREATE DOS SAVE FILE."
+        EXIT SUB
+    END IF
     PRINT #1, "MC45V1"
     WRITE #1, Mx, My, Lives, Cash, Bank, Food, WaterCnt
     WRITE #1, Ladders, Shovel, Pickaxe, Cart, Lantern, TNT
@@ -697,22 +709,31 @@ SUB SaveMine
     NEXT yy
     CLOSE #1
     ON ERROR GOTO 0
-    Message$ = "SAVED TO MC45SAVE.DAT."
-    EXIT SUB
-SaveError:
-    RESUME SaveFailed
-SaveFailed:
-    ON ERROR GOTO 0
-    CLOSE
-    Message$ = "DISK WRITE ERROR: SAVE FAILED."
+    IF FileErrorFlag = 0 THEN
+        Message$ = "SAVED TO MC45SAVE.DAT."
+    ELSE
+        Message$ = "DISK WRITE ERROR: SAVE FAILED."
+    END IF
 END SUB
 
 SUB LoadMine
     ' This DOS-native format deliberately does not overwrite QB64 V1/V2/V3.
     ' Validate the header and row lengths before accepting map contents.
-    ON ERROR GOTO LoadError
+    FileErrorFlag = 0
+    ON ERROR GOTO FileErrorHandler
     OPEN Filename$ FOR INPUT AS #1
+    IF FileErrorFlag <> 0 THEN
+        ON ERROR GOTO 0
+        Message$ = "NO DOS SAVE FILE FOUND."
+        EXIT SUB
+    END IF
     LINE INPUT #1, magic$
+    IF FileErrorFlag <> 0 THEN
+        CLOSE #1
+        ON ERROR GOTO 0
+        Message$ = "EMPTY OR UNREADABLE SAVE FILE."
+        EXIT SUB
+    END IF
     IF magic$ <> "MC45V1" THEN
         CLOSE #1
         Message$ = "WRONG SAVE FORMAT.": EXIT SUB
@@ -720,8 +741,20 @@ SUB LoadMine
     INPUT #1, Mx, My, Lives, Cash, Bank, Food, WaterCnt
     INPUT #1, Ladders, Shovel, Pickaxe, Cart, Lantern, TNT
     INPUT #1, Haul, Steps, Deepest
+    IF FileErrorFlag <> 0 THEN
+        CLOSE #1
+        ON ERROR GOTO 0
+        Message$ = "TRUNCATED SAVE HEADER."
+        EXIT SUB
+    END IF
     FOR yy = 0 TO MH - 1
         LINE INPUT #1, rowHex$
+        IF FileErrorFlag <> 0 THEN
+            CLOSE #1
+            ON ERROR GOTO 0
+            Message$ = "TRUNCATED MAP RECORD."
+            EXIT SUB
+        END IF
         IF LEN(rowHex$) <> MW THEN CLOSE #1: Message$ = "BAD MAP RECORD.": EXIT SUB
         FOR xx = 0 TO MW - 1
             value = FromHex%(MID$(rowHex$, xx + 1, 1))
@@ -733,6 +766,12 @@ SUB LoadMine
     NEXT yy
     FOR yy = 0 TO MH - 1
         LINE INPUT #1, rowHex$
+        IF FileErrorFlag <> 0 THEN
+            CLOSE #1
+            ON ERROR GOTO 0
+            Message$ = "TRUNCATED LOOT RECORD."
+            EXIT SUB
+        END IF
         IF LEN(rowHex$) <> MW * 2 THEN CLOSE #1: Message$ = "BAD LOOT ROW.": EXIT SUB
         FOR xx = 0 TO MW - 1
             hi = FromHex%(MID$(rowHex$, xx * 2 + 1, 1))
@@ -755,14 +794,6 @@ SUB LoadMine
     Message$ = "SAVE LOADED."
     NeedsDraw = -1
     ON ERROR GOTO 0
-    EXIT SUB
-LoadError:
-    RESUME LoadFailed
-LoadFailed:
-    ON ERROR GOTO 0
-    CLOSE
-    Message$ = "SAVE FILE MISSING OR DAMAGED."
-    NeedsDraw = -1
 END SUB
 
 SUB DrawTextLine (row, colour, caption$)
