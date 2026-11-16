@@ -21,7 +21,7 @@ class QuickBasic45SourceTests(unittest.TestCase):
     def test_source_is_dos_ascii_and_short_lines(self):
         self.assertTrue(all(len(line) <= 255 for line in self.lines))
         self.assertNotIn('\t', self.text)
-        self.assertNotRegex(self.text, r'(?im)\\bhex\\$\\s*=')
+        self.assertNotRegex(self.text, r'(?im)\bhex\$\s*=')
         self.assertGreater(len(self.lines), 600)
 
     def test_only_quickbasic_45_graphics_input(self):
