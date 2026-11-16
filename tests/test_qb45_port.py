@@ -21,6 +21,7 @@ class QuickBasic45SourceTests(unittest.TestCase):
     def test_source_is_dos_ascii_and_short_lines(self):
         self.assertTrue(all(len(line) <= 255 for line in self.lines))
         self.assertNotIn('\t', self.text)
+        self.assertNotRegex(self.text, r'(?im)\\bhex\\$\\s*=')
         self.assertGreater(len(self.lines), 600)
 
     def test_only_quickbasic_45_graphics_input(self):
@@ -69,8 +70,8 @@ class QuickBasic45SourceTests(unittest.TestCase):
         self.assertIn('MC45V1', load)
         self.assertIn('MC45SAVE.DAT', self.text)
         self.assertNotIn('MINERS_CLAIM_SAVE_V3', save)
-        self.assertIn('LEN(hex$) <> MW * 2', load)
-        self.assertIn('LEN(hex$) <> MW', load)
+        self.assertIn('LEN(rowHex$) <> MW * 2', load)
+        self.assertIn('LEN(rowHex$) <> MW', load)
 
     def test_25_line_screen_bottom_does_not_scroll(self):
         draw = self.block('DrawTextLine')
