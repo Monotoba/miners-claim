@@ -127,6 +127,7 @@ SUB NewGame
     CameraX = 0: CameraY = 0: LastDir = 1
     HasBeenDown = 0: CartMode = 0
     HazardType = 0: HazardStart! = 0!
+    LastFall! = TIMER
     BlastOn = 0: PauseSteps = 0: EncounterType = 0
     BankEntry$ = "": SaleEntry$ = ""
     Message$ = "WELCOME! WEST SHOPS, EAST MINE."
@@ -380,6 +381,7 @@ SUB MoveTo (dx, dy)
             Message$ = "ORE COLLECTED: $" + LTRIM$(STR$(amount&))
             StepTo nx, ny
         CASE WATER, GAS, SNAKE
+            IF value = SNAKE THEN PutTile nx, ny, EMPTY
             LoseLife "MINING HAZARD! LOST A LIFE."
         CASE BEDROCK
             Message$ = "BEDROCK CANNOT BE DUG."
@@ -876,7 +878,7 @@ SUB DrawCell (x, y, value)
 END SUB
 
 SUB DrawBuildings
-    IF CameraY > 1 THEN EXIT SUB
+    IF CameraY <> 0 THEN EXIT SUB
     FOR n = 1 TO 4
         SELECT CASE n
             CASE 1: leftx = 1: widthx = 11: title$ = "MERC"
